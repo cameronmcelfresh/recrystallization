@@ -10,11 +10,11 @@
     %junctions
 
 gridSize =800; %side length
-numGrains = 80; %number of grains
+numGrains = 120; %number of grains
 
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=80; %minimum grain area before removing grain
-dt = 0.2; %timestep each iteration
+dt = 0.25; %timestep each iteration
 totalTime=400; %total time to run the simulation
 maxNodeVelocity=1; %maximum node velocity in a given timestep
 
@@ -42,7 +42,7 @@ C = linspecer(numGrains); %color map with unique distinguishable colors
 
 %% Find the grain corners and connectivity
 
-[nodeLoc,nodeBelong,nodeConnect] = grainConnectivity(grid);
+[nodeLoc,nodeBelong,nodeConnect,segRadius] = grainConnectivity(grid);
 
 meshCheck(nodeConnect,nodeBelong);
 %% Show the gridded image
@@ -74,9 +74,12 @@ for t = 1:dt:totalTime
     [nodeBelong,nodeLoc,nodeConnect] = requireTripleJunctions(nodeBelong,nodeLoc,nodeConnect,minRemeshDistance);
     codeTimer.refineMesh=codeTimer.refineMesh+toc;
     
-    %Remove any grains that are below the size threshold
+    %Remove any grains that are below the size threshold - added in a
+    %requireTripleJunctions to see if it can help avoid the formation of
+    %quadruple junctions
     tic
     [nodeBelong,nodeLoc,nodeConnect,grainMat] = grainRemesh(nodeBelong,nodeLoc,nodeConnect,grainMat,minGrainArea,gridSize);
+    [nodeBelong,nodeLoc,nodeConnect] = requireTripleJunctions(nodeBelong,nodeLoc,nodeConnect,minRemeshDistance);
     codeTimer.grainRemesh=codeTimer.grainRemesh+toc;
 
     %Calculate the position updates
@@ -88,9 +91,9 @@ for t = 1:dt:totalTime
     
     %Plot the grains
     tic
-    %clf(f)
-    %plotGrains(grid,nodeBelong,nodeLoc,nodeConnect,grainMat,C);
-    %pause(0.00001);
+    clf(f)
+    plotGrains(grid,nodeBelong,nodeLoc,nodeConnect,grainMat,segRadius,C);
+    pause(0.001);
     codeTimer.plotGrains=codeTimer.plotGrains+toc;
     
     %Save data and re-check mesh

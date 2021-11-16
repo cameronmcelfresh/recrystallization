@@ -1,4 +1,4 @@
-function  plotGrains(grid,nodeBelong,nodeLoc,nodeConnect,grainMat,C)
+function  plotGrains(grid,nodeBelong,nodeLoc,nodeConnect,grainMat,segRadius,C)
 %plotGrains Function to plot the grains given positions and a connectivity
 %matrix. Plot utilizes polygon plotting as opposed to the grid system
 
@@ -15,6 +15,10 @@ numGrains = length(unique(grid));
 %             
 %             plot([nodeLoc(i,1),nodeLoc(j,1)],[nodeLoc(i,2),nodeLoc(j,2)])
 %             hold on
+%             
+% %             curvePoints = arcPoints(nodeLoc(i,:),nodeLoc(j,:),1,5); %calculate the curvature point
+% %             plot([nodeLoc(i,1);curvePoints(:,1);nodeLoc(j,1)],[nodeLoc(i,2);curvePoints(:,2);nodeLoc(j,2)]);
+% %             hold on
 %             
 %             if  i>j
 %                 avgX = (nodeLoc(i,1)+nodeLoc(j,1))/2;
@@ -40,11 +44,12 @@ for g = 1:numGrains
     end
     
     grainNodePos = [];
-    
+    grainNodeID = [];
     %Loop through all the grains to construct the internal connectivity
     for r = 1:length(nodeBelong)
         if ismember(g,nodeBelong(r,:))
             grainNodePos=[grainNodePos;nodeLoc(r,1),nodeLoc(r,2)];
+            grainNodeID=[grainNodeID,r];
         end
     end    
     
@@ -53,11 +58,31 @@ for g = 1:numGrains
         continue;
     end
     
+    %% Order and then plot the grain boundaries
+    
     b = boundary(grainNodePos(:,1),grainNodePos(:,2),.01);    
     %b = boundary(grainNodePos(:,1),grainNodePos(:,2));
     
     %b = clockWiseOrder(grainNodePos(:,1),grainNodePos(:,2)); %construct the boundayr matrix by hand
     %b=[b;b(1)]; %add the connection to the first node
+    
+    %% Testing if we can draw boundaries with a radius
+    numberOfArcPoints=5;
+    for p = 1:length(b)-1
+        ind1=grainNodeID(b(p));  %gather the true indexes of the points
+        ind2=grainNodeID(b(p+1));
+        
+        curvePoints = arcPoints(grainNodePos(b(p),:),grainNodePos(b(p+1),:),segRadius(ind1,ind2)*300,numberOfArcPoints); %calculate the curvature points
+        
+        grainNodePos=[grainNodePos;curvePoints]; %append the new points to the list of existing points
+        %hold on
+        %scatter(curvePoints(:,1), curvePoints(:,2));
+        
+    end
+    
+    %b = boundary(grainNodePos(:,1),grainNodePos(:,2),.01); %re-calculate the boundary order with the new curature points
+    b = clockWiseOrder(grainNodePos(:,1),grainNodePos(:,2));    
+    %% Plot Radius
     
     %Warning Catching
     %Can turn off warning if needed
@@ -70,14 +95,11 @@ for g = 1:numGrains
     %Capture the area
     grainAreaSum = grainAreaSum+ polyarea(grainNodePos(b,1),grainNodePos(b,2));
     
-%     [warnMsg, ~] = lastwarn;
-%     if ~isempty(warnMsg)    
-%         fprintf("Warning printing grain %i\n",g);
-%     end
-    
     hold on
+    %scatter(grainNodePos(:,1),grainNodePos(:,2));
     
     text(mean(grainNodePos(:,1)),mean(grainNodePos(:,2)),string(g));
+
     
 end
 

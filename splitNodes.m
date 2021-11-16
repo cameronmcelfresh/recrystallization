@@ -14,26 +14,34 @@ nodeLoc(oldNodeID,:)=[]; %elimiate the old quadruple junction
 [~,columns]=size(nodeBelong);
 nodeBelong=[nodeBelong;zeros(2,columns)];
 
+allGrains = nodeBelong(oldNodeID,nodeBelong(oldNodeID,:)~=0); %all of the grains in the 4-way junction
+
 grainIgnoredforNode1 = intersect(nodeBelong(nodesForNewPos1(1),nodeBelong(nodesForNewPos1(1),:)~=0), nodeBelong(nodesForNewPos1(2),nodeBelong(nodesForNewPos1(2),:)~=0));
-grainIgnoredforNode1 = intersect(grainIgnoredforNode1,nodeBelong(oldNodeID,nodeBelong(oldNodeID,:)~=0));
-
 grainIgnoredforNode2 = intersect(nodeBelong(nodesForNewPos2(1),nodeBelong(nodesForNewPos2(1),:)~=0), nodeBelong(nodesForNewPos2(2),nodeBelong(nodesForNewPos2(2),:)~=0));
-grainIgnoredforNode2 = intersect(grainIgnoredforNode2,nodeBelong(oldNodeID,nodeBelong(oldNodeID,:)~=0));
 
-%nodeBelong=[nodeBelong,zeros(2,columns)];
-grainsForNode1=nodeBelong(oldNodeID,nodeBelong(oldNodeID,:)~=0);
+grainsForNode1=setdiff(allGrains,grainIgnoredforNode1);
+grainsForNode2=setdiff(allGrains,grainIgnoredforNode2);
+
+% grainIgnoredforNode1 = intersect(nodeBelong(nodesForNewPos1(1),nodeBelong(nodesForNewPos1(1),:)~=0), nodeBelong(nodesForNewPos1(2),nodeBelong(nodesForNewPos1(2),:)~=0));
+% grainIgnoredforNode1 = intersect(grainIgnoredforNode1,nodeBelong(oldNodeID,nodeBelong(oldNodeID,:)~=0));
+% 
+% grainIgnoredforNode2 = intersect(nodeBelong(nodesForNewPos2(1),nodeBelong(nodesForNewPos2(1),:)~=0), nodeBelong(nodesForNewPos2(2),nodeBelong(nodesForNewPos2(2),:)~=0));
+% grainIgnoredforNode2 = intersect(grainIgnoredforNode2,nodeBelong(oldNodeID,nodeBelong(oldNodeID,:)~=0));
+% 
+% %nodeBelong=[nodeBelong,zeros(2,columns)];
+% grainsForNode1=nodeBelong(oldNodeID,nodeBelong(oldNodeID,:)~=0);
 % grainsForNode1
 % grainIgnoredforNode1
-grainsForNode1(grainsForNode1==grainIgnoredforNode1)=[];
-
-
-grainsForNode2=nodeBelong(oldNodeID,nodeBelong(oldNodeID,:)~=0);
+% grainsForNode1(grainsForNode1==grainIgnoredforNode1)=[];
+% 
+% 
+% grainsForNode2=nodeBelong(oldNodeID,nodeBelong(oldNodeID,:)~=0);
 % grainsForNode2
 % grainIgnoredforNode2
-grainsForNode2(grainsForNode2==grainIgnoredforNode2)=[];
+% grainsForNode2(grainsForNode2==grainIgnoredforNode2)=[];
 
 for i = 1:3
-    nodeBelong(nodeID1+1,i)=grainsForNode2(i);
+    nodeBelong(nodeID1+1,i)=grainsForNode2(i); %having these backwards seems to work better...
     nodeBelong(nodeID2+1,i)=grainsForNode1(i);
 end
 

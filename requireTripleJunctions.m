@@ -8,12 +8,20 @@ splitDist=1.5*minRemeshDistance; %arbitrary distance to split the nodes
 
 %% Find all the junctions with >3 connections
 
-for n = 1:numNodes
+n=1;
+while n<numNodes
     numConnections = length(unique(nodeBelong(n,:)))-1;
+    
+    if numConnections==5        
+       fprintf("\tNode %i belongs to >4 grains (%i grains,quadruple+ junction)\n",n,numConnections);
+       [nodeBelong,nodeLoc,nodeConnect] = randomSplit5WayNode(n,nodeBelong,nodeLoc,nodeConnect,minRemeshDistance); 
+       n=1;
+       continue;
+    end
     
     if numConnections>3
 
-        fprintf("\tNode %i belongs to >3 grains (%i grains,quadruple+ junction) ***\n",n,numConnections);
+        fprintf("\tNode %i belongs to >3 grains (%i grains,quadruple+ junction)\n",n,numConnections);
 
         %% Split each of the quadruple junctions into 2 triple junctions
 
@@ -63,7 +71,7 @@ for n = 1:numNodes
        %Place the new node in the list and update the necessary connecitivty,
        %locations, etc.
 
-       [~,bestChoice] = max(energyValues);
+       [~,bestChoice] = max(energyValues); %here we're really taking the minimum energy configuration by maximizing sin(theta)*sin(theta)*sin(theta)
 
        fprintf("Old Node Position: %.1f,%.1f\n",nodeLoc(nodeRemoveID,1),nodeLoc(nodeRemoveID,2));
        fprintf("New Node Position1: %.1f,%.1f\n",newNodePos(bestChoice,1),newNodePos(bestChoice,2));
@@ -84,6 +92,7 @@ for n = 1:numNodes
         %length(nodeConnect)
         %break; %only do one new junction at a time for now for debugging
     end
+    n=n+1;
 end
 
 

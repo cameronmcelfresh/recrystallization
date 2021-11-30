@@ -1,4 +1,4 @@
-function [nodeLoc,nodeBelong,nodeConnect,segRadius] = grainConnectivity(grid)
+function [nodeLoc,nodeBelong,nodeConnect,segRadius,nodeVel] = grainConnectivity(grid)
 %grainConnectivity Function to return the locations of the grain corner
 %connectivity matrix
 
@@ -8,7 +8,7 @@ numGrains = length(unique(grid));
 nodeLoc = []; %List to hold x,y node locations
 nodeBelong = []; %list to hold the grains that each node belong to
 nodeConnect=[]; %connectivity matrix
-segRadius = [];
+segRadius = []; %segment radius - mirrors the connectivity matrix
 
 gridLength = length(grid);
 
@@ -133,15 +133,24 @@ for grain = 1:numGrains
     
 end
 
+%% Initialize all node velocities to zero
+nodeVel=zeros(length(nodeBelong),2);
+
 %% Create the segment curature matrix
 
+%lengthOfSegMat=length(nodeBelong)+100;
+lengthOfSegMat=length(nodeBelong);
+
 %make the matrix much bigger than needed so account for new connections
-segRadius = (rand(length(nodeBelong)+100,length(nodeBelong)+100)-0.5)*100+100; 
+segRadius = (rand(lengthOfSegMat,lengthOfSegMat))*100+600; 
+
+%randomize it to forwards and backwards
+segRadius=segRadius.*sign(rand(lengthOfSegMat,lengthOfSegMat)-0.5);
 
 %Make sure the matrix is symmetric
 for i = 1:length(segRadius)
     for j = 1:length(segRadius)
-        segRadius(j,i)=-segRadius(i,j);
+        segRadius(j,i)=segRadius(i,j);
     end
 end
 

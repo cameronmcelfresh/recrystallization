@@ -1,4 +1,4 @@
-function [nodeBelong,nodeLoc,nodeConnect,grainMat] = grainRemesh(nodeBelong,nodeLoc,nodeConnect,grainMat,minGrainArea,gridLength)
+function [nodeBelong,nodeLoc,nodeConnect,grainMat,segRadius,nodeVel] = grainRemesh(nodeBelong,nodeLoc,nodeConnect,grainMat,minGrainArea,segRadius,nodeVel,gridLength)
 %grainRemesh Function to remove grains that have an area below the
 %minGrainArea cutoff
 
@@ -94,7 +94,7 @@ if ~isempty(grainsToRemove)
             
             
             %Merge the two nearest nodes
-            [nodeLoc,nodeBelong,nodeConnect] = mergeNodes(grainNodeID(node1),grainNodeID(node2),nodeLoc,nodeBelong,nodeConnect,gridLength);
+            [nodeLoc,nodeBelong,nodeConnect,segRadius,nodeVel] = mergeNodes(grainNodeID(node1),grainNodeID(node2),nodeLoc,nodeBelong,nodeConnect,nodeVel,segRadius,gridLength);
             
             
 %             %Add the boundary nodes (with adjusted positions)
@@ -168,7 +168,10 @@ if ~isempty(grainsToRemove)
             nodeBelong(nodeOfInterest,:)=[]; %eliminate the old node from the nodeBelong matrix
             nodeConnect(:,nodeOfInterest)=[]; %remove the row/column associated with the node in the connectivity matrix
             nodeConnect(nodeOfInterest,:)=[];
-
+            segRadius(:,nodeOfInterest)=[]; %remove the row/column associated with the node in the segment radius matrix
+            segRadius(nodeOfInterest,:)=[];
+            nodeVel(nodeOfInterest,:)=[]; %remove the node velocity
+            
             fprintf("\t\tRemove node %i because redundant - adding node %i -> %i connection\n",nodeOfInterest, attachedNodes(1),attachedNodes(2));
         end
 

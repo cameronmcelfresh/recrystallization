@@ -1,4 +1,4 @@
-function [nodeBelong,nodeLoc,nodeConnect] = splitNodes(newNodePos1,newNodePos2,nodesForNewPos1,nodesForNewPos2,oldNodeID,nodeBelong,nodeLoc,nodeConnect)
+function [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel] = splitNodes(newNodePos1,newNodePos2,nodesForNewPos1,nodesForNewPos2,oldNodeID,nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel)
 %splitNodes Function to split a 4-way junction into 2, 3-way junctions
 
 currentNumNodes=length(nodeLoc);
@@ -47,8 +47,7 @@ end
 
 nodeBelong(oldNodeID,:)=[]; %remove the node from the nodeBelong array
 
-%% Update the connectivity matrix (nodeConnect)
-
+%% Update the connectivity matrix (nodeConnect) 
 %Add the necessary connectivity value
 for i = 1:2
     nodeConnect(nodeID1+1,nodesForNewPos1(i))=1;
@@ -63,6 +62,40 @@ nodeConnect(nodeID2+1,nodeID1+1)=1; %make the connection across the newly create
 
 nodeConnect(:,oldNodeID)=[];
 nodeConnect(oldNodeID,:)=[]; %eliminate the old node
+
+
+%% Update the segRadius Matrix
+% currentNumNodes
+% size(segRadius)
+
+col1 = (rand(currentNumNodes,1)*100+600 ).*sign(rand(currentNumNodes,1)-0.5);
+col2 = (rand(currentNumNodes,1)*100+600 ).*sign(rand(currentNumNodes,1)-0.5); 
+row1 = (rand(1,currentNumNodes+2)*100+600).*sign(rand(1,currentNumNodes+2)-0.5); 
+row2 = (rand(1,currentNumNodes+2)*100+600).*sign(rand(1,currentNumNodes+2)-0.5); 
+
+segRadius = [segRadius,col1]; %add the first node
+segRadius = [segRadius,col2]; %add the second node
+
+% segRadius =[segRadius; ((rand(1,currentNumNodes+2)-0.5)*1300)]; %add the first node
+% segRadius =[segRadius; ((rand(1,currentNumNodes+2)-0.5)*1000)]; %add the second node
+
+segRadius =[segRadius; row1]; %add the first node
+segRadius =[segRadius; row2]; %add the second node
+
+
+for i = 1:currentNumNodes+1 %conserve the radius directons
+    segRadius(currentNumNodes+1,i)=segRadius(i,currentNumNodes+1);
+    segRadius(currentNumNodes+2,i)=segRadius(i,currentNumNodes+2);
+end
+
+segRadius(:,oldNodeID)=[];
+segRadius(oldNodeID,:)=[]; %eliminate the old node
+
+%% Update the node velocity list
+
+nodeVel=[nodeVel;zeros(2,2)];
+nodeVel(oldNodeID,:)=[]; %eliminate the old node
+
 
 end
 

@@ -1,10 +1,10 @@
-function [nodeBelong,nodeLoc,nodeConnect] = requireTripleJunctions(nodeBelong,nodeLoc,nodeConnect,minRemeshDistance)
+function [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel] = requireTripleJunctions(nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance)
 %requireTripleJunctions Function to go through the node connectivity and
 %remove any quadruple junctions that exist
 
 
 numNodes = length(nodeConnect);
-splitDist=1.5*minRemeshDistance; %arbitrary distance to split the nodes 
+splitDist=1.25*minRemeshDistance; %arbitrary distance to split the nodes 
 
 %% Find all the junctions with >3 connections
 
@@ -14,7 +14,7 @@ while n<numNodes
     
     if numConnections==5        
        fprintf("\tNode %i belongs to >4 grains (%i grains,quadruple+ junction)\n",n,numConnections);
-       [nodeBelong,nodeLoc,nodeConnect] = randomSplit5WayNode(n,nodeBelong,nodeLoc,nodeConnect,minRemeshDistance); 
+       [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel] = randomSplit5WayNode(n,nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance); 
        n=1;
        continue;
     end
@@ -57,13 +57,13 @@ while n<numNodes
 
        for splitChoice = 1:2
 
-           [nodeBelongTEMP,nodeLocTEMP,nodeConnectTEMP] = splitNodes(newNodePos(splitChoice,[1,2]),...
+           [~,nodeLocTEMP,nodeConnectTEMP,~,~] = splitNodes(newNodePos(splitChoice,[1,2]),...
                newNodePos(splitChoice,[3,4]),...
                pairs(splitChoice,[1,2]),...
                pairs(splitChoice,[3,4]),...
                nodeRemoveID,...
-               nodeBelong,nodeLoc,nodeConnect);
-            
+               nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel);
+                       
            %Calculate the energ of the split as the sum over both nodes
            energyValues(splitChoice) = nodeEnergy(numNodes,nodeLocTEMP,nodeConnectTEMP);
            energyValues(splitChoice) = energyValues(splitChoice)+nodeEnergy(numNodes+1,nodeLocTEMP,nodeConnectTEMP);
@@ -77,12 +77,12 @@ while n<numNodes
        fprintf("New Node Position1: %.1f,%.1f\n",newNodePos(bestChoice,1),newNodePos(bestChoice,2));
        fprintf("New Node Position2: %.1f,%.1f\n",newNodePos(bestChoice,3),newNodePos(bestChoice,4));
 
-       [nodeBelong,nodeLoc,nodeConnect] = splitNodes(newNodePos(bestChoice,[1,2]),...
+       [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel] = splitNodes(newNodePos(bestChoice,[1,2]),...
         newNodePos(bestChoice,[3,4]),...
         pairs(bestChoice,[1,2]),...
         pairs(bestChoice,[3,4]),...
         nodeRemoveID,...
-        nodeBelong,nodeLoc,nodeConnect);
+        nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel);
 
         fprintf("\tRemoved node %i and added nodes %i and %i\n",nodeRemoveID,length(nodeConnect)-1, length(nodeConnect));
         

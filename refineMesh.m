@@ -1,4 +1,4 @@
-function [nodeBelong,nodeLoc,nodeConnect] = refineMesh(nodeBelong,nodeLoc,nodeConnect,minDist,gridLength)
+function [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel] = refineMesh(nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minDist,gridLength)
 %refineMesh Refines the nodes based on a minimum distance
 %   minDist is the minimum distance between nodes
 
@@ -35,7 +35,7 @@ while doneRemesh==0 %repeat
 %                     end
                     
                     fprintf("Merging node "+jIter+" into node " + nIter+"\n");
-                    [nodeLoc,nodeBelong,nodeConnect] = mergeNodes(nodeElim,nodeAbsorb,nodeLoc,nodeBelong,nodeConnect,gridLength);
+                    [nodeLoc,nodeBelong,nodeConnect,segRadius,nodeVel] = mergeNodes(nodeElim,nodeAbsorb,nodeLoc,nodeBelong,nodeConnect,nodeVel,segRadius,gridLength);
                     doneRemesh=0;
                     break
                 end 

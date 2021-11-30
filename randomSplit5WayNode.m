@@ -1,8 +1,8 @@
-function [nodeBelong,nodeLoc,nodeConnect] = randomSplit5WayNode(nodeToSplit,nodeBelong,nodeLoc,nodeConnect,minRemeshDistance)
+function [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel] = randomSplit5WayNode(nodeToSplit,nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance)
 %randomSplit5WayNode Function to do a preliminary split of a 5-way junction
 %into a triple juntion and quadruple junction
 
-splitDist=1.5*minRemeshDistance; %arbitrary distance to split the nodes 
+splitDist=1.25*minRemeshDistance; %arbitrary distance to split the nodes 
 
 nodeRemoveID=nodeToSplit; %node to be removed
 
@@ -103,6 +103,27 @@ nodeConnect(nodeID2+1,nodeID1+1)=1; %make the connection across the newly create
 
 nodeConnect(:,nodeRemoveID)=[];
 nodeConnect(nodeRemoveID,:)=[]; %eliminate the old node
+
+%% Update the segment radius/curvature matrix (segRadius)
+
+segRadius = [segRadius,(rand(currentNumNodes,1)-0.5)*1300];
+segRadius = [segRadius,(rand(currentNumNodes,1)-0.5)*1300];
+
+segRadius =[segRadius; (rand(1,currentNumNodes+2)-0.5)*1300];
+segRadius =[segRadius; (rand(1,currentNumNodes+2)-0.5)*1300];
+
+for i = 1:currentNumNodes+1 %conversve the radius directons
+    segRadius(currentNumNodes,i)=segRadius(i,currentNumNodes);
+    segRadius(currentNumNodes+1,i)=segRadius(i,currentNumNodes+1);
+end
+
+segRadius(:,nodeRemoveID)=[];
+segRadius(nodeRemoveID,:)=[]; %eliminate the old node
+
+%% Update the node velocity matrix
+
+nodeVel=[nodeVel;zeros(2,2)];
+nodeVel(nodeRemoveID,:)=[]; %eliminate the old node
 
 
 end

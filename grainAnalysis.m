@@ -61,13 +61,13 @@ for iter = 1:maxIter %loop through each timestep
     runningGrainSize(iter)=mean(grainSize);
     
     if iter==1
-        bins = 0:10:200;
+        %bins = 0:10:200;
         figure
-        histogram(grainSize,bins);
+        histogram(grainSize,25);
         hold on
     elseif iter == maxIter
-        bins = 0:10:200;
-        histogram(grainSize,bins);
+        %bins = 0:10:200;
+        histogram(grainSize,25);
         title("Grain Size Distribution (before and after RX)");
         ylabel("Frequency of Grain Size");
         xlabel("Grain Size");

@@ -16,16 +16,15 @@ numGrains = length(unique(grid));
 %             plot([nodeLoc(i,1),nodeLoc(j,1)],[nodeLoc(i,2),nodeLoc(j,2)])
 %             hold on
 %             
-% %             curvePoints = arcPoints(nodeLoc(i,:),nodeLoc(j,:),1,5); %calculate the curvature point
-% %             plot([nodeLoc(i,1);curvePoints(:,1);nodeLoc(j,1)],[nodeLoc(i,2);curvePoints(:,2);nodeLoc(j,2)]);
-% %             hold on
+% %              curvePoints = arcPoints(nodeLoc(i,:),nodeLoc(j,:),segRadius(i,j),5); %calculate the curvature point
+% %              plot([nodeLoc(i,1);curvePoints(:,1);nodeLoc(j,1)],[nodeLoc(i,2);curvePoints(:,2);nodeLoc(j,2)]);
+% %              hold on
 %             
-%             if  i>j
-%                 avgX = (nodeLoc(i,1)+nodeLoc(j,1))/2;
-%                 avgY = (nodeLoc(i,2)+nodeLoc(j,2))/2;
-% 
-%                 text(avgX,avgY,string(j+"->"+i));
-%             end
+% %             if  i>j
+% %                 avgX = (nodeLoc(i,1)+nodeLoc(j,1))/2;
+% %                 avgY = (nodeLoc(i,2)+nodeLoc(j,2))/2;
+% %                 text(avgX,avgY,string(j+"->"+i));
+% %             end
 %         end
 %     end
 % end
@@ -66,18 +65,32 @@ for g = 1:numGrains
     %b = clockWiseOrder(grainNodePos(:,1),grainNodePos(:,2)); %construct the boundayr matrix by hand
     %b=[b;b(1)]; %add the connection to the first node
     
-    %% Testing if we can draw boundaries with a radius
-    numberOfArcPoints=5;
+    %% Draw boundaries with a radius
+    numberOfArcPoints=5; %number of points to draw along the arc
     for p = 1:length(b)-1
         ind1=grainNodeID(b(p));  %gather the true indexes of the points
         ind2=grainNodeID(b(p+1));
         
-        curvePoints = arcPoints(grainNodePos(b(p),:),grainNodePos(b(p+1),:),segRadius(ind1,ind2)*300,numberOfArcPoints); %calculate the curvature points
+        %set the default value of the curvatures to be zero. If there is no
+        %driving force to produce curvature then skip the creation of the
+        %arc points. Also skip if boundary segment
+        if segRadius(ind1,ind2)==0
+            continue;
+        end
         
-        grainNodePos=[grainNodePos;curvePoints]; %append the new points to the list of existing points
+        %Skip the curvature if it is a boundary segment 
+        if ismember(1,nodeLoc(ind1,:)) || ismember(gridLength,nodeLoc(ind1,:))
+            if ismember(1,nodeLoc(ind2,:)) || ismember(gridLength,nodeLoc(ind2,:))
+                continue;
+            end
+        end
+        
+        %% Generate the curvature point given the segment radii
+        %curvePoints = arcPoints(grainNodePos(b(p),:),grainNodePos(b(p+1),:),segRadius(ind1,ind2),numberOfArcPoints); %calculate the curvature points        %curvePoints = arcPoints(grainNodePos(b(p),:),grainNodePos(b(p+1),:),segRadius(ind1,ind2),numberOfArcPoints); %calculate the curvature points
+
+        %grainNodePos=[grainNodePos;curvePoints]; %append the new points to the list of existing points
         %hold on
         %scatter(curvePoints(:,1), curvePoints(:,2));
-        
     end
     
     %b = boundary(grainNodePos(:,1),grainNodePos(:,2),.01); %re-calculate the boundary order with the new curature points
@@ -97,13 +110,8 @@ for g = 1:numGrains
     
     hold on
     %scatter(grainNodePos(:,1),grainNodePos(:,2));
-    
-    text(mean(grainNodePos(:,1)),mean(grainNodePos(:,2)),string(g));
-
-    
+    %text(mean(grainNodePos(:,1)),mean(grainNodePos(:,2)),string(g));
 end
-
 fprintf("Total Grain Area =  %.3f %%\n",grainAreaSum*100/((gridLength-1)*(gridLength-1)));
-
 end
 

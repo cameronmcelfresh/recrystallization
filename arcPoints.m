@@ -22,8 +22,13 @@ d = norm(B-A); %separation between points
 
 % Choose R radius >= d/2
 
-%R=abs(radius);
-R=d*2; %arbitrary radius for now...
+R=abs(radius);
+
+
+if R<d/2 %if the arc has a radius below the required radius then cap it
+    R=d/2*1.1;
+end
+%R=d*2; %arbitrary radius for now...
 
 
 % if radius>0
@@ -35,13 +40,15 @@ R=d*2; %arbitrary radius for now...
 
 allCenters=circ_cent(A',B',R);
 
-% if radius>0
-%     C=allCenters(1,:);
-% else
-%     C=allCenters(2,:);
-% end
+if radius>0
+    C=allCenters(1,:);
+    ignoredCenter=allCenters(2,:);
+else
+    C=allCenters(2,:);
+    ignoredCenter=allCenters(1,:);
+end
 
-C=allCenters(1,:);
+%C=allCenters(1,:);
 
 a = atan2(A(2)-C(2),A(1)-C(1));
 b = atan2(B(2)-C(2),B(1)-C(1));
@@ -92,6 +99,9 @@ points = [x(2:end-1)',y(2:end-1)'];
 % hold on
 % scatter([pos1(1) pos2(1)],[pos1(2) pos2(2)],60,'filled');
 % viscircles(C,R,'LineStyle','--','Color','black','LineWidth',0.2);
+% 
+% viscircles(ignoredCenter,R,'LineStyle','--','Color','red','LineWidth',0.2);
+
 
 end
 

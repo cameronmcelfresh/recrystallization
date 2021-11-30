@@ -115,7 +115,7 @@ center = [newlat(IndexToFermat),newlon(IndexToFermat);];
 
 %% Optional Plotting and checking of the angles
 
-% %% Plot the overlapping circles
+%% Plot the overlapping circles
 % figure
 % scatter(points(:,1),points(:,2),50,'filled')
 % hold on
@@ -124,7 +124,7 @@ center = [newlat(IndexToFermat),newlon(IndexToFermat);];
 % 
 % viscircles(equiCenters,radiusVals,'LineStyle','--','Color','black','LineWidth',0.2);
 % axis equal
-% 
+%
 % %% Measure the angles between the fermat point and the connecting points
 % centerAngles=[];
 % for i = 1:3
@@ -142,3 +142,4 @@ center = [newlat(IndexToFermat),newlon(IndexToFermat);];
 % 
 % fprintf("Angles with Fermat points are %.1f, %.1f, %.1f\n",centerAngles(1),centerAngles(2),centerAngles(3));
 
+end

@@ -141,18 +141,21 @@ nodeVel=zeros(length(nodeBelong),2);
 %lengthOfSegMat=length(nodeBelong)+100;
 lengthOfSegMat=length(nodeBelong);
 
-%make the matrix much bigger than needed so account for new connections
-segRadius = (rand(lengthOfSegMat,lengthOfSegMat))*100+600; 
+%initialize all boundaries to zero radius (i.e. straight boundaries) 
+segRadius = zeros(lengthOfSegMat,lengthOfSegMat); 
 
-%randomize it to forwards and backwards
-segRadius=segRadius.*sign(rand(lengthOfSegMat,lengthOfSegMat)-0.5);
-
-%Make sure the matrix is symmetric
-for i = 1:length(segRadius)
-    for j = 1:length(segRadius)
-        segRadius(j,i)=segRadius(i,j);
-    end
-end
+% %make the matrix much bigger than needed so account for new connections
+% segRadius = (rand(lengthOfSegMat,lengthOfSegMat))*100+600; 
+% 
+% %randomize it to forwards and backwards
+% segRadius=segRadius.*sign(rand(lengthOfSegMat,lengthOfSegMat)-0.5);
+% 
+% %Make sure the matrix is symmetric
+% for i = 1:length(segRadius)
+%     for j = 1:length(segRadius)
+%         segRadius(j,i)=segRadius(i,j);
+%     end
+% end
 
 end
 

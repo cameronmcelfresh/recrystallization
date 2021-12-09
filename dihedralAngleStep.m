@@ -31,7 +31,6 @@ dXdY = maxJumpDist; %Maximum jump that can be taken;
 % 
 % bestVec = [dXbest,dYbest];
 
-
 %% Using the fermat point as the center point of a triangle
 connectingNodes = nodeLoc(ismember(nodeConnect(:,nodeID),1),:);
 

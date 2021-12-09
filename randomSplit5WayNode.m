@@ -106,11 +106,20 @@ nodeConnect(nodeRemoveID,:)=[]; %eliminate the old node
 
 %% Update the segment radius/curvature matrix (segRadius)
 
-segRadius = [segRadius,(rand(currentNumNodes,1)-0.5)*1300];
-segRadius = [segRadius,(rand(currentNumNodes,1)-0.5)*1300];
+% % Assign arbitrary random radius values
+% segRadius = [segRadius,(rand(currentNumNodes,1)-0.5)*1300];
+% segRadius = [segRadius,(rand(currentNumNodes,1)-0.5)*1300];
+% 
+% segRadius =[segRadius; (rand(1,currentNumNodes+2)-0.5)*1300];
+% segRadius =[segRadius; (rand(1,currentNumNodes+2)-0.5)*1300];
 
-segRadius =[segRadius; (rand(1,currentNumNodes+2)-0.5)*1300];
-segRadius =[segRadius; (rand(1,currentNumNodes+2)-0.5)*1300];
+%Assign all the new radius values to zero
+segRadius = [segRadius,zeros(currentNumNodes,1)];
+segRadius = [segRadius,zeros(currentNumNodes,1)];
+
+segRadius =[segRadius; zeros(1,currentNumNodes+2)];
+segRadius =[segRadius; zeros(1,currentNumNodes+2)];
+
 
 for i = 1:currentNumNodes+1 %conversve the radius directons
     segRadius(currentNumNodes,i)=segRadius(i,currentNumNodes);

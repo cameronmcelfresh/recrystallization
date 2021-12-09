@@ -2,14 +2,13 @@ function [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel] = requireTripleJunct
 %requireTripleJunctions Function to go through the node connectivity and
 %remove any quadruple junctions that exist
 
-
 numNodes = length(nodeConnect);
 splitDist=1.25*minRemeshDistance; %arbitrary distance to split the nodes 
 
 %% Find all the junctions with >3 connections
 
 n=1;
-while n<numNodes
+while n<numNodes+1
     numConnections = length(unique(nodeBelong(n,:)))-1;
     
     if numConnections==5        

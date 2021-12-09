@@ -132,12 +132,20 @@ end
 
 %% Build the composition, display, and surface energy matrix
 
-grainMat = ones(grainNum,5);
+grainMat = ones(grainNum,6);
 
 % column 1 corresponds with the phase/chemistry
 % column 2 corresponds with whether or not the grain is displayed. Set to 0
     % when grain has been removed
-% column 3-6 correspond to the euler angles associated with the grain's crystallographic orientation
+% column 3-5 correspond to the euler angles associated with the grain's crystallographic orientation
+% column 6 has the dislocation density of the grain
+
+%% Assign a random dislocation density to the grain
+grainMat(:,6) = rand(grainNum,1)*1E11+1E12;
+
+%% Call the randBunges function to generate Bunge burgers vectors
+%Reference: https://stabix.readthedocs.io/en/latest/bicrystal_definition.html
+grainMat(:,3:5)=randBunges(grainNum);
 
 % Construct a random orientation vector xyz to create to rotation
 % quaternion
@@ -161,10 +169,6 @@ grainMat = ones(grainNum,5);
 %     xyz(:,2).*sin(rotQ/2),...
 %     xyz(:,3).*sin(rotQ/2)
 %     ];
-
-%Call the randBunges function to generate Bunge burgers vectors
-%Reference: https://stabix.readthedocs.io/en/latest/bicrystal_definition.html
-grainMat(:,3:5)=randBunges(grainNum);
 
 
 end

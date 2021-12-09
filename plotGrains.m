@@ -1,4 +1,4 @@
-function  plotGrains(grid,nodeBelong,nodeLoc,nodeConnect,grainMat,segRadius,C)
+function  plotGrains(grid,nodeBelong,nodeLoc,nodeConnect,grainMat,segRadius,C,plotNodeNumbers)
 %plotGrains Function to plot the grains given positions and a connectivity
 %matrix. Plot utilizes polygon plotting as opposed to the grid system
 
@@ -6,30 +6,28 @@ function  plotGrains(grid,nodeBelong,nodeLoc,nodeConnect,grainMat,segRadius,C)
 numGrains = length(unique(grid));
 [gridLength,~]=size(grid);
 
-% figure
-% title("Grain Outline")
-% 
-% for i=1:length(nodeConnect)
-%     for j = 1:length(nodeConnect)
-%         if nodeConnect(i,j)==1
-%             
-%             plot([nodeLoc(i,1),nodeLoc(j,1)],[nodeLoc(i,2),nodeLoc(j,2)])
-%             hold on
-%             
-% %              curvePoints = arcPoints(nodeLoc(i,:),nodeLoc(j,:),segRadius(i,j),5); %calculate the curvature point
-% %              plot([nodeLoc(i,1);curvePoints(:,1);nodeLoc(j,1)],[nodeLoc(i,2);curvePoints(:,2);nodeLoc(j,2)]);
-% %              hold on
-%             
-% %             if  i>j
-% %                 avgX = (nodeLoc(i,1)+nodeLoc(j,1))/2;
-% %                 avgY = (nodeLoc(i,2)+nodeLoc(j,2))/2;
-% %                 text(avgX,avgY,string(j+"->"+i));
-% %             end
-%         end
-%     end
-% end
-% scatter(nodeLoc(:,1),nodeLoc(:,2),55,'filled');
+if plotNodeNumbers == 1 
+    figure
+    title("Grain Outline")
+    for i=1:length(nodeConnect)
+        for j = 1:length(nodeConnect)
+            if nodeConnect(i,j)==1
 
+                 %Extract the curvature points
+                 curvePoints = arcPoints(nodeLoc(i,:),nodeLoc(j,:),segRadius(i,j),5); %calculate the curvature point
+                 plot([nodeLoc(i,1);curvePoints(:,1);nodeLoc(j,1)],[nodeLoc(i,2);curvePoints(:,2);nodeLoc(j,2)]);
+                 hold on
+
+                if  i>j
+                    avgX = (nodeLoc(i,1)+nodeLoc(j,1))/2;
+                    avgY = (nodeLoc(i,2)+nodeLoc(j,2))/2;
+                    text(avgX,avgY,string(j+"->"+i));
+                end
+            end
+        end
+    end
+    scatter(nodeLoc(:,1),nodeLoc(:,2),55,'filled');
+end
 
 %% Now plot it using polygons
 
@@ -86,9 +84,9 @@ for g = 1:numGrains
         end
         
         %% Generate the curvature point given the segment radii
-        %curvePoints = arcPoints(grainNodePos(b(p),:),grainNodePos(b(p+1),:),segRadius(ind1,ind2),numberOfArcPoints); %calculate the curvature points        %curvePoints = arcPoints(grainNodePos(b(p),:),grainNodePos(b(p+1),:),segRadius(ind1,ind2),numberOfArcPoints); %calculate the curvature points
+        curvePoints = arcPoints(grainNodePos(b(p),:),grainNodePos(b(p+1),:),segRadius(ind1,ind2),numberOfArcPoints); %calculate the curvature points        %curvePoints = arcPoints(grainNodePos(b(p),:),grainNodePos(b(p+1),:),segRadius(ind1,ind2),numberOfArcPoints); %calculate the curvature points
 
-        %grainNodePos=[grainNodePos;curvePoints]; %append the new points to the list of existing points
+        grainNodePos=[grainNodePos;curvePoints]; %append the new points to the list of existing points
         %hold on
         %scatter(curvePoints(:,1), curvePoints(:,2));
     end
@@ -110,7 +108,7 @@ for g = 1:numGrains
     
     hold on
     %scatter(grainNodePos(:,1),grainNodePos(:,2));
-    %text(mean(grainNodePos(:,1)),mean(grainNodePos(:,2)),string(g));
+    text(mean(grainNodePos(:,1)),mean(grainNodePos(:,2)),string(g));
 end
 fprintf("Total Grain Area =  %.3f %%\n",grainAreaSum*100/((gridLength-1)*(gridLength-1)));
 end

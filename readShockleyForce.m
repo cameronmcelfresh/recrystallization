@@ -1,4 +1,4 @@
-function [RSForce] = readShockleyForce(nodeID,nodeBelong,grainMat,nodeConnect,nodeLoc,misorientMat,constants)
+function [RSForce] = readShockleyForce(nodeID,nodeBelong,grainMat,nodeConnect,nodeLoc,misorientMat,segRadius,constants)
 %readShockleyForce Function to calculate the energy of a node using the
 %Read-Shockley equation for a grain boundary (misorientation informed)
 
@@ -24,7 +24,6 @@ forceAdjust = [];
 partnerNodes = find(ismember(nodeConnect(:,nodeID),1));
 partnerNodesGrains=nodeBelong(partnerNodes,:);
 
-
 for i = 1:length(boundaryPairs) %cycle through the grain boundaries
     %Extract the grain and euler angles
     g1 = boundaryPairs(i,1);
@@ -40,21 +39,27 @@ for i = 1:length(boundaryPairs) %cycle through the grain boundaries
     %Find the node associated with the segment
     [~,theNode] = max(sum(partnerNodesGrains==g1,2)+sum(partnerNodesGrains==g2,2));
     
+    %% Generate the points along the arc of the curved boundary. 
+    %If boundary isn't curved then use the other triple junction node
+    if segRadius(nodeID,partnerNodes(theNode))==0
+        nearestNodePos = nodeLoc(partnerNodes(theNode),:);
+    else
+        numPoints=16;
+        
+        %Exact all the points on the arc
+        curvePoints = arcPoints(nodeLoc(nodeID,:),nodeLoc(partnerNodes(theNode),:),segRadius(nodeID,partnerNodes(theNode)),numPoints);
+        
+        %find the index of the closest point on the curve
+        [~,closestIndex]=min(sum((curvePoints-nodeLoc(nodeID,:)).^2,2).^0.5); 
+        nearestNodePos = curvePoints(closestIndex,:); %closest artificial node on the arc to the TJ
+    end
+    
     %Find the unit vector for the boundary - normalize it
-    uVec = nodeLoc(partnerNodes(theNode),:)-nodeLoc(nodeID,:);
+    uVec = nearestNodePos-nodeLoc(nodeID,:);
     uVec=uVec/norm(uVec);
     
     %Add the unit vector to the list
     segmentUnitVec=[segmentUnitVec;uVec];
-    
-%     %Other two connecting nodes
-%     otherNodes = partnerNodes(partnerNodes~=theNode);
-%     
-%     %Calculate the theta and scale the force with sin(theta)
-%     u=nodeLoc(otherNodes(1),:)-nodeLoc(nodeID,:);
-%     v=nodeLoc(otherNodes(2),:)-nodeLoc(nodeID,:);
-%     CosTheta = max(min(dot(u,v)/(norm(u)*norm(v)),1),-1);
-%     thetaVal = real(acosd(CosTheta));
     
 end
 %Calculate the Read-Shockley Energy and project it along the unit vectors
@@ -64,6 +69,9 @@ RSForce=segmentUnitVec.*repmat(RSEnergy',[1,2]);
 RSForce=-sum(RSForce);
 
 origNorm = norm(RSForce); %save the norm to use later 
+
+%% Read Shockley criteria assuming all equal misorientation values
+RSForce = -sum(segmentUnitVec)*-100; %
 
 % %% Project the force onto the optimal dihedral angle direction
 % % Reference : https://www.mathworks.com/matlabcentral/answers/2216-projecting-a-vector-to-another-vector
@@ -79,7 +87,7 @@ origNorm = norm(RSForce); %save the norm to use later
 % else
 %     RSForce=[0,0];
 % end
-% 
+
 % if any(isnan(RSForce)) %pause if there is a Nan detected
 %     nodeID
 %     misorientationVals

@@ -68,10 +68,16 @@ nodeConnect(oldNodeID,:)=[]; %eliminate the old node
 % currentNumNodes
 % size(segRadius)
 
-col1 = (rand(currentNumNodes,1)*100+600 ).*sign(rand(currentNumNodes,1)-0.5);
-col2 = (rand(currentNumNodes,1)*100+600 ).*sign(rand(currentNumNodes,1)-0.5); 
-row1 = (rand(1,currentNumNodes+2)*100+600).*sign(rand(1,currentNumNodes+2)-0.5); 
-row2 = (rand(1,currentNumNodes+2)*100+600).*sign(rand(1,currentNumNodes+2)-0.5); 
+% col1 = (rand(currentNumNodes,1)*100+600 ).*sign(rand(currentNumNodes,1)-0.5);
+% col2 = (rand(currentNumNodes,1)*100+600 ).*sign(rand(currentNumNodes,1)-0.5); 
+% row1 = (rand(1,currentNumNodes+2)*100+600).*sign(rand(1,currentNumNodes+2)-0.5); 
+% row2 = (rand(1,currentNumNodes+2)*100+600).*sign(rand(1,currentNumNodes+2)-0.5); 
+
+%Set the new segRadius values to zero
+col1 = zeros(currentNumNodes,1);
+col2 = zeros(currentNumNodes,1);
+row1 = zeros(1,currentNumNodes+2);
+row2 = zeros(1,currentNumNodes+2);
 
 segRadius = [segRadius,col1]; %add the first node
 segRadius = [segRadius,col2]; %add the second node

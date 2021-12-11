@@ -43,7 +43,7 @@ curveNorm = curveNorm/norm(curveNorm); %convert to unit vector
 %radiusRealUnits = radius*constants.realGridSize/constants.gridSize;
 
 boundaryEnergy = abs(gamma0*misorientVal.*(A-log(misorientVal))); %calculate the misorientation boundary energy
-curvatureForce=-(1/radius)*boundaryEnergy*curveNorm; %calculate the curvature force, negative sign needed to reverse the direction of the vector
+curvatureForce=-(1/abs(radius))*boundaryEnergy*curveNorm; %calculate the curvature force, negative sign needed to reverse the direction of the vector
 
 end
 

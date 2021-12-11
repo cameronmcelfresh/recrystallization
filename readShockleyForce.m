@@ -70,7 +70,7 @@ RSForce=-sum(RSForce);
 
 origNorm = norm(RSForce); %save the norm to use later 
 
-%% Read Shockley criteria assuming all equal misorientation values
+%% Read Shockley criteria assuming all equal misorientation values - dummy force
 RSForce = -sum(segmentUnitVec)*-100; %
 
 % %% Project the force onto the optimal dihedral angle direction

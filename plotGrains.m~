@@ -11,12 +11,13 @@ numGrains = length(grainMat);
 gridLength=constants.gridSize;
 
 %Min and max dislocation densities for plotting purposes
-minDislocationDensity=constants.minDislocationDensity; 
-maxDislocationDensity=constants.maxDislocationDensity; 
+minDislocationDensity=1e12;
+maxDislocationDensity=1.1e12;
 
 
 %% Begin plotting
 if constants.plotBoundaries == 1 
+    figure
     title("Grain Outline")
     for i=1:length(nodeConnect)
         for j = 1:length(nodeConnect)
@@ -137,7 +138,7 @@ for g = 1:numGrains
         
         if colorInd>256
             colorInd=256;
-        elseif colorInd<1
+        elseif colorInd<0
             colorInd=1;
         end
         
@@ -154,11 +155,8 @@ for g = 1:numGrains
     grainAreaSum = grainAreaSum+ polyarea(orderedGrainPoints(:,1),orderedGrainPoints(:,2));
     
     hold on
-    
-    %plot the grain numbers if needed
-    if constants.plotNodeNumbers
-        text(mean(grainNodePos(:,1)),mean(grainNodePos(:,2)),string(g));
-    end
+    %scatter(grainNodePos(:,1),grainNodePos(:,2));
+    text(mean(grainNodePos(:,1)),mean(grainNodePos(:,2)),string(g));
 end
 
 if constants.plotDislocationDensity %plot the colorbar for the dislocation density coloring if needed
@@ -167,18 +165,16 @@ if constants.plotDislocationDensity %plot the colorbar for the dislocation densi
     %Amount to add each step
     stepSize = (maxDislocationDensity-minDislocationDensity)/4;
     
-    colorbarObject =colorbar('Ticks',[0,...
-        0.25,...
-        0.5,...
-        0.75,....
-        1],...
+    colorbar('Ticks',[minDislocationDensity,...
+        minDislocationDensity+stepSize*1,...
+        minDislocationDensity+stepSize*2,...
+        minDislocationDensity+stepSize*3,....
+        maxDislocationDensity],...
          'TickLabels',{sprintf('%.2e',minDislocationDensity),...
          sprintf('%.2e',minDislocationDensity+stepSize*1),...
          sprintf('%.2e',minDislocationDensity+stepSize*2),...
          sprintf('%.2e',minDislocationDensity+stepSize*3),...
-         sprintf('%.2e',maxDislocationDensity)} );
-     
-     colorbarObject.Label.String = 'Dislocation Density [m^-2]';
+         sprintf('%.2e',maxDislocationDensity)} 
 end
 
 fprintf("Total Grain Area =  %.3f %%\n",grainAreaSum*100/((gridLength-1)*(gridLength-1)));

@@ -57,7 +57,8 @@ if constants.useCurvature ==1 %only update the curvature if user specifies
                 curvatureForce = curvatureForceGB(n1,n2,nodeLoc,segRadius,misorientMat,nodeBelong,constants);
 
                 %Sum the boundary forces
-                GBForce = SEDForce+curvatureForce;
+                GBForce = SEDForce+curvatureForce/10; %curvature force is currently too high relative to SED force. Need to analyze units
+                %GBForce = SEDForce;
 
                 %Calculate the velocity of the grain boundary
                 GBVelocity = GBForce*constants.mobilityGB;

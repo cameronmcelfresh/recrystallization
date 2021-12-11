@@ -1,10 +1,10 @@
-function [grid,grainMat] = buildMicro(gridSize,grainNum)
+function [grid,grainMat] = buildMicro(gridSize,grainNum,constants)
 %buildMicro Function to build a microstructure with the alloted number of
 %grains
 
 %Scale factors for elongated grain structures
-scalex = 0.3;
-scaley = 0.3;
+scalex = constants.scalex;
+scaley = constants.scaley;
 
 %Empty grid to hold grain assignments
 grid = zeros(gridSize,gridSize);
@@ -141,7 +141,11 @@ grainMat = ones(grainNum,6);
 % column 6 has the dislocation density of the grain
 
 %% Assign a random dislocation density to the grain
-grainMat(:,6) = rand(grainNum,1)*1E11+1E12;
+
+minDisDensity = constants.minDislocationDensity; %minimum dislocation density
+maxDisDensity = constants.maxDislocationDensity; %maximum dislocation density
+
+grainMat(:,6) = rand(grainNum,1)*(maxDisDensity-minDisDensity) + minDisDensity;
 
 %% Call the randBunges function to generate Bunge burgers vectors
 %Reference: https://stabix.readthedocs.io/en/latest/bicrystal_definition.html

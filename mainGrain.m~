@@ -6,13 +6,6 @@ addpath("./postProcessing");
 %% To-do list
 
 % Physics Implementations
-    % get rid of bug where small grains have their radius rapidly switch
-        % signs between positive and negative (due to restoring curvature
-        % force). Alternatively, grains of a certain (small) size can be
-        % restricted from having curvature. 
-    % check to see if the magnitude of the curvature force is on the same
-        % scale as the magnitude of the plastic strain energy differential
-        % force
     % institute curvature-dependent calculation of the local dihedral angle
     % temperature-based mobility
     % node-specific mobility to relate to the node velocity
@@ -29,8 +22,6 @@ addpath("./postProcessing");
     % no crossing segments
     
 % "Other"
-    % re-write plotting code to correctly extract the connectivity each
-        % time given a radius and node connectivity matrix
     % write more thorough descriptions for all the variables and functions
     % organize the functions in different directories using the "addPath"
         % command so debugging will be easier 
@@ -42,16 +33,16 @@ addpath("./postProcessing");
 
 gridSize = 1000; %side length
 realGridSize=1e-3; %"true" size of the grid. Relevant to the velocity of the boundary motion
-numGrains = 30; %number of grains to pack into the grid
+numGrains = 20; %number of grains to pack into the grid
 
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=150; %minimum grain area before removing grain
 dt = 0.02; %timestep each iteration
-totalTime=40; %total time to run the simulation
+totalTime=10; %total time to run the simulation
 maxNodeVelocity=1.5; %maximum node velocity in a given timestep
 
-const.mobility=0.1; %triple junction mobility
-const.mobilityGB=40; %grain boundary mobility
+const.mobility=3; %triple junction mobility
+const.mobilityGB=0.1; %grain boundary mobility
 const.dt = dt;
 const.numGrains=numGrains;
 const.realGridSize=realGridSize;
@@ -63,32 +54,20 @@ const.v=0.28; %Poisson's ratio
 const.coreWidth=2*const.b; %Dislocation Core Width [m]
 const.useCurvature = 1; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
 
-%Set the dislocation density minimum and maximum. Used for plotting the
-%dislocation density map and also for assigning dislocation densities (if
-%needed)
-const.minDislocationDensity = 1e12;
-const.maxDislocationDensity = 1.2e12;
-
-%Scale ratio for the x and y directions for elongated grain structures
-const.scalex = 0.3;
-const.scaley = 0.3;
-
 %% Non-physical Variables
 
-const.plotMicrostructure=1; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
-const.plotBoundaries = 0; %1==only plot the boundaries of all the grains, exclude any color. Default is random coloring
-const.plotNodeNumbers = 0; %1==plot the nodeIDs and boundary connections each iteration
-const.plotDislocationDensity = 1; %1==plot the dislocation density of each grain instead of a random color
-const.writeMovie=1; %1==write frames to an avi file, 0==don't generate movie
-const.saveMovieFreq = 5; % frequency to save snapshots for the video
-const.movieTitle="curvature_TJ_motion5";
-const.movieHeight = 700; %controls the height of the plot and video
-const.movieWidth = 840; %
+plotMicrostructure=1; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
+plotNodeNumbers = 0; %1==plot the nodeIDs and boundary connections each iteration
+constant.plotDislocationDensity = 1; %1==plot the dislocation density of each grain
+writeMovie=1; %1==write frames to an avi file, 0==don't generate movie
+movieTitle="curved_boundary_motion";
+constants.videoHeight = 700;
+constants.videoWidth = 840;
 
 
 %videoFrames =[];
-if const.writeMovie==1 %Record a movie if specified to do so   
-     moviename=sprintf(const.movieTitle+'.avi'); %update the name of the file
+if writeMovie==1 %Record a movie if specified to do so   
+     moviename=sprintf(movieTitle+'.avi'); %update the name of the file
     
     aviobj=VideoWriter(moviename);
     aviobj.Quality=100;
@@ -125,9 +104,8 @@ codeTimer.meshCheckANDSave=0;
 tic %start timer for initilization
 
 fprintf("Generating grain centers and euler angles...\n");
-[grid,grainMat] = buildMicro(gridSize,numGrains,const);
+[grid,grainMat] = buildMicro(gridSize,numGrains);
 C = linspecer(numGrains); %color map with unique distinguishable colors 
-const.C = C; %save to constant dictionary
 
 %Generate disorientation distribution
 %plotMisorientationDist(grainMat)
@@ -151,7 +129,7 @@ misorientMat = misorientationMat(grainMat); %generate the grain misorientation m
 %% Refine the initial mesh
 fprintf("Refining mesh...\n");
 [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel]=refineMesh(nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance,gridSize);
-[nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel]=requireTripleJunctions(nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance);
+[nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel] = requireTripleJunctions(nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance);
 
 meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel);
 
@@ -187,14 +165,14 @@ for t = dt:dt:totalTime
     %Plot the grains and save to video
     tic
     clf(f)
-    if const.plotMicrostructure
-        plotGrains(nodeBelong,nodeLoc,nodeConnect,grainMat,segRadius,const); %plot the grains to axis
+    if plotMicrostructure
+        plotGrains(grid,nodeBelong,nodeLoc,nodeConnect,grainMat,segRadius,C,plotNodeNumbers); %plot the grains to axis
     end
-    if const.writeMovie && const.plotMicrostructure && mod(iter,const.saveMovieFreq)==0
-        set(gcf,'Position',[15 15 const.movieWidth,const.movieHeight]); %set the position and size of the figure of the figure
+    if writeMovie && plotMicrostructure
+        set(gcf,'Position',[15 15 constants.videoWidth,constants.videoWidth]); %set the position and size of the figure of the figure
         theframe = getframe(gcf);
         %x(frame_counter) = theframe;
-        videoFrames(round(iter/const.saveMovieFreq)) = theframe;
+        videoFrames(iter) = theframe;
         %frame_counter=frame_counter+1;
     end    
     pause(0.001);
@@ -218,12 +196,12 @@ end
 %% Post-Processing
 
 %Generate the movie associated with the simulation
-if const.writeMovie==1 %Record a movie if specified to do so   
+if writeMovie==1 %Record a movie if specified to do so   
     aviobj=VideoWriter(moviename);
     aviobj.Quality=100;
       
     open(aviobj);    
-    for frameIter = 1:length(videoFrames)
+    for frameIter = 1:iter-1
         writeVideo(aviobj,videoFrames(frameIter));
     end
     close(aviobj);

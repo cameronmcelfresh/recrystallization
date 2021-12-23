@@ -28,10 +28,6 @@ for n = 1:numNodes
     %values across each boundary
     RSForce = readShockleyForce(n,nodeBelong,grainMat,nodeConnect,nodeLoc,misorientMat,segRadius,constants);
     
-    %Calculate the total force on each node due to the strain energy
-    %density differential 
-    %sedForce =strainEnergyDensityForce(n,nodeLoc,nodeConnect,nodeBelong,grainMat,constants);
-    
     %Calculate the updated velocity for the next timestep
     nodeVel(n,:)=(RSForce)*mobility;
 end

@@ -25,18 +25,21 @@ end
 %Calculate the new midpoint of the boundary
 newMidPoint = midPoint + GBmidPointUpdate;
 
-% % Code to check if we have crossed the flat boundary. Not needed if we
-% % perform the check below
-% flipRdirection=0;
-% 
-% %check for intersections
-% [xi,~] = polyxpoly([pos1(1), pos2(1)],[pos1(2), pos2(2)],[midPoint(1),newMidPoint(1)],[midPoint(2),newMidPoint(2)]);
-% 
-% if ~isempty(xi) && currentRadius~=0 %xi and xi will be empty if there is no intersections   
-%     flipRdirection=1;
-% end
+%% Test code Code to check if we have crossed the flat boundary. Not needed if we
+% perform the check below
+flipRdirection=0;
 
-%Calculate the new radius given the anchor points and the new arc midpoint
+%check for intersections
+[xi,~] = polyxpoly([pos1(1), pos2(1)],[pos1(2), pos2(2)],[midPoint(1),newMidPoint(1)],[midPoint(2),newMidPoint(2)]);
+
+if ~isempty(xi) && currentRadius~=0 %xi and xi will be empty if there is no intersections   
+    flipRdirection=1;
+    
+    R = 0; %if we have crossed the boundary, set the curvature to zero
+    return
+end
+
+%% Calculate the new radius given the anchor points and the new arc midpoint
 [R,~] = fit_circle_through_3_points([pos1new;newMidPoint;pos2new]);
 
 % %Flip the direction if we have crossed the boundary

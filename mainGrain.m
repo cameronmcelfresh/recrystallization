@@ -1,7 +1,10 @@
 %% A script to and model grain recrystallization
 
-%add the post processing functions
+%add the post-processing functions
 addpath("./postProcessing");
+
+%add the functions to facilitate the COMSOL handshake and data passing
+addpath("./COMSOL_HandshakeFunctions");
 
 %% To-do list
 
@@ -13,15 +16,13 @@ addpath("./postProcessing");
     % check to see if the magnitude of the curvature force is on the same
         % scale as the magnitude of the plastic strain energy differential
         % force
-    % institute curvature-dependent calculation of the local dihedral angle
     % temperature-based mobility
     % node-specific mobility to relate to the node velocity
-    % plastic `r strain density distribution as a driving force for boundary
+    % plastic strain density distribution as a driving force for boundary
         % mobility
     % curvature of segments based on node velocities
 
 % Post-simulation analysis
-    % pole figures
     % calculation of GB lengths of certain boundaries (HABG, LAGB, etc.)
     
 % Unit Tests
@@ -29,8 +30,6 @@ addpath("./postProcessing");
     % no crossing segments
     
 % "Other"
-    % re-write plotting code to correctly extract the connectivity each
-        % time given a radius and node connectivity matrix
     % write more thorough descriptions for all the variables and functions
     % organize the functions in different directories using the "addPath"
         % command so debugging will be easier 
@@ -41,8 +40,8 @@ addpath("./postProcessing");
 %% Physical Variables
 
 gridSize = 1000; %side length
-realGridSize=1e-3; %"true" size of the grid. Relevant to the velocity of the boundary motion
-numGrains = 30; %number of grains to pack into the grid
+realGridSize=3e-6; %"true" size of the grid. Relevant to the velocity of the boundary motion
+numGrains = 60; %number of grains to pack into the grid
 
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=150; %minimum grain area before removing grain
@@ -61,7 +60,7 @@ const.G=78*1E9; %Shear Modulus [Pa]
 const.b=2.8*10^-10; %Burgers vector [m]
 const.v=0.28; %Poisson's ratio
 const.coreWidth=2*const.b; %Dislocation Core Width [m]
-const.useCurvature = 1; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
+const.useCurvature = 0; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
 
 %Set the dislocation density minimum and maximum. Used for plotting the
 %dislocation density map and also for assigning dislocation densities (if
@@ -78,14 +77,17 @@ const.scaley = 0.3;
 const.plotMicrostructure=1; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
 const.plotBoundaries = 0; %1==only plot the boundaries of all the grains, exclude any color. Default is random coloring
 const.plotNodeNumbers = 0; %1==plot the nodeIDs and boundary connections each iteration
-const.plotDislocationDensity = 1; %1==plot the dislocation density of each grain instead of a random color
-const.writeMovie=1; %1==write frames to an avi file, 0==don't generate movie
+const.plotDislocationDensity = 0; %1==plot the dislocation density of each grain instead of a random color
+const.writeMovie=0; %1==write frames to an avi file, 0==don't generate movie
 const.saveMovieFreq = 5; % frequency to save snapshots for the video
 const.movieTitle="curvature_TJ_motion5";
-const.movieHeight = 700; %controls the height of the plot and video
-const.movieWidth = 840; %
+const.movieHeight = 700; %controls the height of the video
+const.movieWidth = 840; %controls the width of the video
+
+const.useCOMSOL = 0; %whether or not to interact with COMSOL
 
 
+%% Prepare video writer if needed
 %videoFrames =[];
 if const.writeMovie==1 %Record a movie if specified to do so   
      moviename=sprintf(const.movieTitle+'.avi'); %update the name of the file
@@ -100,6 +102,8 @@ if const.writeMovie==1 %Record a movie if specified to do so
 %     videoFrames(length(dt:dt:totalTime)).cdata =zeros(840,1120,3,'uint8');
 %     videoFrames(length(dt:dt:totalTime)).colormap =[];
 end
+
+%% Prepare cell to hold simulation info and set timers
 
 %Cell to store all location info
 storedInfo = cell(round(totalTime/dt),6);
@@ -142,11 +146,6 @@ meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel);
 fprintf("Generating grain misorientation look-up matrix...\n");
 misorientMat = misorientationMat(grainMat); %generate the grain misorientation matrix
 
-%% Show the gridded image
-% figure
-% imagesc(grid')
-% hold on
-% scatter(nodeLoc(:,1),nodeLoc(:,2),55,'filled');
 
 %% Refine the initial mesh
 fprintf("Refining mesh...\n");
@@ -163,6 +162,12 @@ iter = 1;
 
 for t = dt:dt:totalTime
     fprintf("Iter %i\n",iter);
+    
+    %Save the node positions and grains that they belong to in order to assign any grid points that
+    %changed grains. Data to be use in generating input for COMSOL file
+    OLDnodeLoc = nodeLoc;
+    OLDnodeBelong = nodeBelong;
+    
     %Refine the mesh if needed (merging nodes that are too close)
     tic
     [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel]=refineMesh(nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance/2,gridSize); %merge nodes that need to be merged
@@ -189,15 +194,14 @@ for t = dt:dt:totalTime
     clf(f)
     if const.plotMicrostructure
         plotGrains(nodeBelong,nodeLoc,nodeConnect,grainMat,segRadius,const); %plot the grains to axis
+        pause(0.001); %pause to generate the plot
     end
     if const.writeMovie && const.plotMicrostructure && mod(iter,const.saveMovieFreq)==0
         set(gcf,'Position',[15 15 const.movieWidth,const.movieHeight]); %set the position and size of the figure of the figure
         theframe = getframe(gcf);
-        %x(frame_counter) = theframe;
         videoFrames(round(iter/const.saveMovieFreq)) = theframe;
         %frame_counter=frame_counter+1;
     end    
-    pause(0.001);
     codeTimer.plotGrains=codeTimer.plotGrains+toc;
     
     %Save data and re-check mesh
@@ -211,6 +215,9 @@ for t = dt:dt:totalTime
 
     meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel); %run unit tests / sense checks on the structure
     codeTimer.meshCheckANDSave=codeTimer.meshCheckANDSave+toc;
+    
+    
+    %Generate output files for COMSOL
 
     iter=iter+1;
 end

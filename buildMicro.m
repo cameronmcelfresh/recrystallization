@@ -132,13 +132,15 @@ end
 
 %% Build the composition, display, and surface energy matrix
 
-grainMat = ones(grainNum,6);
+grainMat = ones(grainNum,8);
 
 % column 1 corresponds with the phase/chemistry
 % column 2 corresponds with whether or not the grain is displayed. Set to 0
     % when grain has been removed
 % column 3-5 correspond to the euler angles associated with the grain's crystallographic orientation
 % column 6 has the dislocation density of the grain
+% column 7 has the average u1 component of the deformation in the grian
+% column 8 has the average u2 component of the deformation in the grain
 
 %% Assign a random dislocation density to the grain
 
@@ -151,29 +153,8 @@ grainMat(:,6) = rand(grainNum,1)*(maxDisDensity-minDisDensity) + minDisDensity;
 %Reference: https://stabix.readthedocs.io/en/latest/bicrystal_definition.html
 grainMat(:,3:5)=randBunges(grainNum);
 
-% Construct a random orientation vector xyz to create to rotation
-% quaternion
-%Reference for rotation quaternions: https://danceswithcode.net/engineeringnotes/quaternions/quaternions.html
-%Reference for euler angle convention : https://danceswithcode.net/engineeringnotes/rotations_in_3d/rotations_in_3d_part1.html
-% ru=rand(grainNum,1);
-% theta=rand(grainNum,1)*pi;
-% dir = [sqrt(1-ru.^2).*cos(theta),...
-%        sqrt(1-ru.^2).*sin(theta),...
-%        ru];
-% 
-% xyz=dir; %xyz point on a unit sphere
-% normQ=sqrt(sum((xyz.^2),2));
-% 
-% xyz=xyz./normQ; %normalize the quaternion - this is redundant at the moment
-% 
-% rotQ=rand(grainNum,1)*2*pi; %rotation about the quaternion
-% 
-% q = [cos(rotQ/2),...
-%     xyz(:,1).*sin(rotQ/2),...
-%     xyz(:,2).*sin(rotQ/2),...
-%     xyz(:,3).*sin(rotQ/2)
-%     ];
-
+%% Set the average deformation of each grain to be zero because this is the initial RX step
+grainMat(:,7:8) = 0;
 
 end
 

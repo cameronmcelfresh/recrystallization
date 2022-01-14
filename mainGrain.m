@@ -8,6 +8,12 @@ addpath("./COMSOL_HandshakeFunctions");
 
 %% To-do list
 
+% COMSOL Handshake
+    % set the print statements to print to an output file as opposed the
+        % command window for hoffman usage
+    % functions to handle the initialization of COMSOL/RX tradeoff
+    % writing/compiling of new comsol.java files
+
 % Physics Implementations
     % get rid of bug where small grains have their radius rapidly switch
         % signs between positive and negative (due to restoring curvature
@@ -39,19 +45,20 @@ addpath("./COMSOL_HandshakeFunctions");
 
 %% Physical Variables
 
-gridSize = 1000; %side length
+gridSize = 1000; % side length for square grid of size (gridSize,gridSize) when first constructing the vertices
 realGridSize=3e-6; %"true" size of the grid. Relevant to the velocity of the boundary motion
-numGrains = 60; %number of grains to pack into the grid
+numGrains = 40; %number of grains to pack into the grid
 
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=150; %minimum grain area before removing grain
-dt = 0.02; %timestep each iteration
-totalTime=40; %total time to run the simulation
+dt = 0.1; %timestep each iteration
+totalTime=30; %total time to run the simulation [s]
 maxNodeVelocity=1.5; %maximum node velocity in a given timestep
 
-const.mobility=0.1; %triple junction mobility
-const.mobilityGB=40; %grain boundary mobility
-const.dt = dt;
+const.mobility=1E-2;%1E-2;%triple junction mobility
+const.mobilityGB=2E3; %grain boundary mobility
+const.dt = dt; % timestep for RX model to use
+const.totalTime = totalTime; % total simulation time to evolve the microstructure [s]
 const.numGrains=numGrains;
 const.realGridSize=realGridSize;
 const.gridSize=gridSize;
@@ -60,7 +67,16 @@ const.G=78*1E9; %Shear Modulus [Pa]
 const.b=2.8*10^-10; %Burgers vector [m]
 const.v=0.28; %Poisson's ratio
 const.coreWidth=2*const.b; %Dislocation Core Width [m]
-const.useCurvature = 0; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
+const.useCurvature = 1; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
+
+%COMSOL Interaction Variables
+const.useCOMSOL = 0; %whether or not to co-evolve the CPFEM COMSOL code for realistic dislocation densities
+const.strainRate = 100; % strain rate - used in generation of COMSOL .java file
+const.dt_COMSOL = 7e-6; %timestep for COMSOL to use [s]
+const.totalTime_COMSOL = 35e-6; % total time to run the simulation in COMSOL
+const.COMSOL_path = "/u/home/c/cmcelfre/project-jmarian/comsol_RX/Simulation Continue Test Space/2D"; % path for COMSOL file
+const.comsol_file_name = "./COMSOL_HandshakeFunctions/poly_cp_2D_raw.java"; %original java file to copy then rewrite with correct variables
+const.comsol_written_name = "poly_cp_2D_raw.java";
 
 %Set the dislocation density minimum and maximum. Used for plotting the
 %dislocation density map and also for assigning dislocation densities (if
@@ -76,16 +92,17 @@ const.scaley = 0.3;
 
 const.plotMicrostructure=1; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
 const.plotBoundaries = 0; %1==only plot the boundaries of all the grains, exclude any color. Default is random coloring
-const.plotNodeNumbers = 0; %1==plot the nodeIDs and boundary connections each iteration
-const.plotDislocationDensity = 0; %1==plot the dislocation density of each grain instead of a random color
+const.plotNodeNumbers = 1; %1==plot the nodeIDs and boundary connections each iteration
+const.plotDislocationDensity = 1; %1==plot the dislocation density of each grain instead of a random color
+const.runPostProcessing = 0; %1==run all the post processing analysis 
 const.writeMovie=0; %1==write frames to an avi file, 0==don't generate movie
 const.saveMovieFreq = 5; % frequency to save snapshots for the video
-const.movieTitle="curvature_TJ_motion5";
+const.movieTitle="CPFEM_RX"; % title of the movie and .mat file to be saved
 const.movieHeight = 700; %controls the height of the video
 const.movieWidth = 840; %controls the width of the video
 
-const.useCOMSOL = 0; %whether or not to interact with COMSOL
-
+const.OLDnodeLoc=[]; %array to hold the last step's node positions
+const.OLDnodeBelong=[]; %array to hold the last step's grain assignments
 
 %% Prepare video writer if needed
 %videoFrames =[];
@@ -123,8 +140,8 @@ codeTimer.grainRemesh=0;
 codeTimer.calcNodeUpdates=0;
 codeTimer.plotGrains=0;
 codeTimer.meshCheckANDSave=0;
-
-
+codeTimer.COMSOL_handshake=0;
+codeTimer.COMSOL_computation=0;
 %% Build a grain structure using a 2D Voronoi Tesselation. Assign chemistry
 tic %start timer for initilization
 
@@ -135,26 +152,56 @@ const.C = C; %save to constant dictionary
 
 %Generate disorientation distribution
 %plotMisorientationDist(grainMat)
-
 %% Find the node locations, grain corners, connectivity, and starting radii values
 
 fprintf("Generating node locations and connectivity matrices...\n");
 [nodeLoc,nodeBelong,nodeConnect,segRadius,nodeVel] = grainConnectivity(grid);
 
-meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel);
+meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel,grainMat,const);
 %% Generate grain misorientation Matrix to speed up calculations down the line
 fprintf("Generating grain misorientation look-up matrix...\n");
 misorientMat = misorientationMat(grainMat); %generate the grain misorientation matrix
-
 
 %% Refine the initial mesh
 fprintf("Refining mesh...\n");
 [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel]=refineMesh(nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance,gridSize);
 [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel]=requireTripleJunctions(nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance);
 
-meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel);
+meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel,grainMat,const);
 
 codeTimer.initialization=toc; %end initilization timer
+%% Generate the COMSOL .java file and associated seed files to simulate low temperature static deformation
+
+if const.useCOMSOL==1
+    %Generate poly_cp_2D_raw.java in the working directory
+    generateCOMSOLfile(constants);
+
+    %Generate the orientation1.txt, orientation2.txt, orientation3.txt,
+    %u1.txt, u2.txt files in the /COMSOL_input/ directory
+    continuousToSpreadSheet(nodeLoc,nodeBelong,grainMat,const.realGridSize,const.gridSize,400);
+end
+%% Run the low-temperature deformation of the 2D poly crystal
+
+% Generate COMSOL output to produce accurate dislocation densities
+if const.useCOMSOL==1
+    COMSOL_Succeed = simulateCOMSOL_CP();
+    
+    if COMSOL_Succeed ==1
+        fpritnf("COMSOL Crystal Plasticity model run successfully\n");
+    else
+        fpritnf("Failed to run COMSOL Crystal Plasticity model\n");
+    end
+end
+%% Integrate the dislocation density from COMSOL if it exists
+
+if const.useCOMSOL==1 && isfile("./COMSOL_output/dislocationDensity.txt")
+    %Integrate the dislocation density for each grain
+    grainMat=integrateCOMSOL(nodeLoc, nodeBelong, grainMat,const.realGridSize,const.gridSize);
+    
+    %Reset the dislocation density min and max for plotting
+    const.minDislocationDensity = min(grainMat(:,6));
+    const.maxDislocationDensity = max(grainMat(:,6));
+end
 %% Refine and Plot
 figure
 f = figure(1);
@@ -162,11 +209,6 @@ iter = 1;
 
 for t = dt:dt:totalTime
     fprintf("Iter %i\n",iter);
-    
-    %Save the node positions and grains that they belong to in order to assign any grid points that
-    %changed grains. Data to be use in generating input for COMSOL file
-    OLDnodeLoc = nodeLoc;
-    OLDnodeBelong = nodeBelong;
     
     %Refine the mesh if needed (merging nodes that are too close)
     tic
@@ -213,34 +255,36 @@ for t = dt:dt:totalTime
     storedInfo{iter,5} = segRadius;    
     storedInfo{iter,6} = nodeVel;
 
-    meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel); %run unit tests / sense checks on the structure
+    meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel,grainMat,const); %run unit tests / sense checks on the structure
     codeTimer.meshCheckANDSave=codeTimer.meshCheckANDSave+toc;
-    
-    
-    %Generate output files for COMSOL
 
     iter=iter+1;
 end
 
+%% Save all of the data
+save(sprintf('%s',const.movieTitle));
+
 %% Post-Processing
 
-%Generate the movie associated with the simulation
-if const.writeMovie==1 %Record a movie if specified to do so   
-    aviobj=VideoWriter(moviename);
-    aviobj.Quality=100;
-      
-    open(aviobj);    
-    for frameIter = 1:length(videoFrames)
-        writeVideo(aviobj,videoFrames(frameIter));
+if const.runPostProcessing==1   
+    %Generate the movie associated with the simulation
+    if const.writeMovie==1 %Record a movie if specified to do so   
+        aviobj=VideoWriter(moviename);
+        aviobj.Quality=100;
+
+        open(aviobj);    
+        for frameIter = 1:length(videoFrames)
+            writeVideo(aviobj,videoFrames(frameIter));
+        end
+        close(aviobj);
     end
-    close(aviobj);
+
+    %Plot the computation time for each process
+    plotTimers(codeTimer);
+
+    %Calculate the evolving grain size and count - then plot it
+    [runningGrainSize,runningGrainCount] = grainAnalysis(storedInfo,iter-1);
+
+    %Generate Misorientation distribution
+    compMisorientationDist(2,iter-1, storedInfo,misorientMat)
 end
-
-%Plot the computation time for each process
-plotTimers(codeTimer);
-
-%Calculate the evolving grain size and count - then plot it
-[runningGrainSize,runningGrainCount] = grainAnalysis(storedInfo,iter-1);
-
-%Generate Misorientation distribution
-compMisorientationDist(2,iter-1, storedInfo,misorientMat)

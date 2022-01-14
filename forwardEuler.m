@@ -38,7 +38,7 @@ if constants.useCurvature ==1 %only update the curvature if user specifies
     %cycle through all the connections
     for n1 = 1:numNodes
         for n2 = 1:n1 
-
+            
             if n1==n2
                 continue
             end
@@ -49,11 +49,11 @@ if constants.useCurvature ==1 %only update the curvature if user specifies
                 %force,result is a 2D force vector
                 SEDForce = strainEnergyDensityForceGB(n1,n2,nodeLoc,nodeBelong,grainMat,constants); 
 
-                %Calculate the force due to curvature, force,result is a 2D force vector
+                %Calculate the force due to curvature, force,results is a 2D force vector
                 curvatureForce = curvatureForceGB(n1,n2,nodeLoc,segRadius,misorientMat,nodeBelong,constants);
 
                 %Sum the boundary forces
-                GBForce = SEDForce+curvatureForce/10; %curvature force is currently too high relative to SED force. Need to analyze units
+                GBForce = SEDForce+curvatureForce/1E5; %curvature force is currently too high relative to SED force. Need to analyze units
                 %GBForce = SEDForce;
 
                 %Calculate the velocity of the grain boundary
@@ -66,7 +66,7 @@ if constants.useCurvature ==1 %only update the curvature if user specifies
                 %Calculate the new radius value for the boundary given nodal
                 %updates and GB arc midpoint update. This function only handles
                 %the geometry of the moving nodes/arc. 
-                GB_Radius = newGB_Radius(n1,n2,nodeLoc,segRadius(n1,n2),posUpdates,GBmidPointUpdate);
+                GB_Radius = newGB_Radius(n1,n2,nodeLoc,segRadius,posUpdates,GBmidPointUpdate,nodeBelong,grainMat,constants);
 
                 %Set the grain boundary radius to zero (straight) if boundary
                 %curvature is too high

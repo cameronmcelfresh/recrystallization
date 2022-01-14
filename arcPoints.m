@@ -24,9 +24,14 @@ d = norm(B-A); %separation between points
 
 R=abs(radius);
 
-
 if R<d/2 %if the arc has a radius below the required radius then cap it
-    R=d/2*1.1;
+    
+    if R==0 %if no curvature then return the midpoint
+        points=(pos1+pos2)/2;
+        return
+    else   
+        R=d/2*1.1;
+    end
 end
 %R=d*2; %arbitrary radius for now...
 
@@ -101,7 +106,6 @@ points = [x(2:end-1)',y(2:end-1)'];
 % viscircles(C,R,'LineStyle','--','Color','black','LineWidth',0.2);
 % 
 % viscircles(ignoredCenter,R,'LineStyle','--','Color','red','LineWidth',0.2);
-
 
 end
 

@@ -61,7 +61,9 @@ for g = 1:numGrains
             grainNodePos=[grainNodePos;nodeLoc(r,1),nodeLoc(r,2)];
             grainNodeID=[grainNodeID,r];
         end
-    end    
+    end
+    
+    grainNodePosCopy =grainNodePos; % copy of original grain corners to find center for grain number plotting
     
     %Skip the grain if there are no nodes associated with it
     if isempty(grainNodePos)
@@ -157,7 +159,7 @@ for g = 1:numGrains
     
     %plot the grain numbers if needed
     if constants.plotNodeNumbers
-        text(mean(grainNodePos(:,1)),mean(grainNodePos(:,2)),string(g));
+        text(mean(grainNodePosCopy(:,1)),mean(grainNodePosCopy(:,2)),string(g));
     end
 end
 

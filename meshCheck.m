@@ -1,4 +1,4 @@
-function [] = meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel)
+function [] = meshCheck(nodeConnect,nodeBelong,segRadius,nodeLoc,nodeVel,grainMat,constants)
 %meshCheck Function to run checks on the nodes/segments to confirm that it
 
 numNodes = length(nodeConnect);
@@ -41,8 +41,26 @@ if ~(length(nodeVel) == length(nodeLoc))
     fprintf("\tlength(nodeLoc)=%i\n",length(nodeLoc));
 end
 
-%% Make sure that the entire volume is conserved
+%% Make sure that the curvature points in the corect direction
+if constants.useCurvature==1 %only update the curvature if user specifies
+    %cycle through all the connections
+    for n1 = 1:length(nodeLoc)
+        for n2 = 1:n1 
 
+            if n1==n2
+                continue
+            end
+
+            %Check to see if the connection exists
+            if nodeConnect(n1,n2)==1 && segRadius(n1,n2)>0
+                if ~SED_Direction_Convention(n1,n2,nodeLoc,nodeBelong,grainMat,segRadius,constants)
+                    fprintf(" *** Warning: Segment %i -> %i fails SED direction convention\n",n1,n2);
+                end
+            end
+        end
+    end
+
+end
 
 %% Make sure that none of the grains overlap
 

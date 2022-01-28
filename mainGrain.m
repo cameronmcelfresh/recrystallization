@@ -47,12 +47,12 @@ addpath("./COMSOL_HandshakeFunctions");
 
 gridSize = 1000; % side length for square grid of size (gridSize,gridSize) when first constructing the vertices
 realGridSize=3e-6; %"true" size of the grid. Relevant to the velocity of the boundary motion
-numGrains = 40; %number of grains to pack into the grid
+numGrains = 20; %number of grains to pack into the grid
 
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=150; %minimum grain area before removing grain
 dt = 0.1; %timestep each iteration
-totalTime=30; %total time to run the simulation [s]
+totalTime=1; %total time to run the simulation [s]
 maxNodeVelocity=1.5; %maximum node velocity in a given timestep
 
 const.mobility=1E-2;%1E-2;%triple junction mobility
@@ -69,20 +69,28 @@ const.v=0.28; %Poisson's ratio
 const.coreWidth=2*const.b; %Dislocation Core Width [m]
 const.useCurvature = 1; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
 
+%Variables to influence change of misorientation due to dislocation
+%absorption (boundary nucleation)
+const.f = 0.4; % fraction of dislocations absorbed by the boundaries
+const.L = 10^-6; % assumed length of the boundary
+
 %COMSOL Interaction Variables
 const.useCOMSOL = 0; %whether or not to co-evolve the CPFEM COMSOL code for realistic dislocation densities
 const.strainRate = 100; % strain rate - used in generation of COMSOL .java file
 const.dt_COMSOL = 7e-6; %timestep for COMSOL to use [s]
 const.totalTime_COMSOL = 35e-6; % total time to run the simulation in COMSOL
-const.COMSOL_path = "/u/home/c/cmcelfre/project-jmarian/comsol_RX/Simulation Continue Test Space/2D"; % path for COMSOL file
+const.COMSOL_path = "/u/home/c/cmcelfre/project-jmarian/RX/"; % path for COMSOL file
 const.comsol_file_name = "./COMSOL_HandshakeFunctions/poly_cp_2D_raw.java"; %original java file to copy then rewrite with correct variables
 const.comsol_written_name = "poly_cp_2D_raw.java";
 
 %Set the dislocation density minimum and maximum. Used for plotting the
 %dislocation density map and also for assigning dislocation densities (if
 %needed)
-const.minDislocationDensity = 1e12;
-const.maxDislocationDensity = 1.2e12;
+const.minDislocationDensity = 5e12;
+const.maxDislocationDensity = 1e13;
+
+% const.minDislocationDensity = 1e12;
+% const.maxDislocationDensity = 1.1e12;
 
 %Scale ratio for the x and y directions for elongated grain structures
 const.scalex = 0.3;
@@ -92,10 +100,10 @@ const.scaley = 0.3;
 
 const.plotMicrostructure=1; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
 const.plotBoundaries = 0; %1==only plot the boundaries of all the grains, exclude any color. Default is random coloring
-const.plotNodeNumbers = 1; %1==plot the nodeIDs and boundary connections each iteration
+const.plotNodeNumbers = 0; %1==plot the nodeIDs and boundary connections each iteration
 const.plotDislocationDensity = 1; %1==plot the dislocation density of each grain instead of a random color
-const.runPostProcessing = 0; %1==run all the post processing analysis 
-const.writeMovie=0; %1==write frames to an avi file, 0==don't generate movie
+const.runPostProcessing = 1; %1==run all the post processing analysis 
+const.writeMovie=1; %1==write frames to an avi file, 0==don't generate movie
 const.saveMovieFreq = 5; % frequency to save snapshots for the video
 const.movieTitle="CPFEM_RX"; % title of the movie and .mat file to be saved
 const.movieHeight = 700; %controls the height of the video
@@ -106,19 +114,19 @@ const.OLDnodeBelong=[]; %array to hold the last step's grain assignments
 
 %% Prepare video writer if needed
 %videoFrames =[];
-if const.writeMovie==1 %Record a movie if specified to do so   
-     moviename=sprintf(const.movieTitle+'.avi'); %update the name of the file
-    
-    aviobj=VideoWriter(moviename);
-    aviobj.Quality=100;
-    open(aviobj);
-    
-    %Initialize the video structure to hold the frames
-%     videoFrames.cdata=zeros(840,1120,3,'uint8');
-%     videoFrames.colormap = [];
-%     videoFrames(length(dt:dt:totalTime)).cdata =zeros(840,1120,3,'uint8');
-%     videoFrames(length(dt:dt:totalTime)).colormap =[];
-end
+% if const.writeMovie==1 %Record a movie if specified to do so   
+%     moviename=sprintf(const.movieTitle+'.avi'); %update the name of the file
+%     
+%     aviobj=VideoWriter(moviename);
+%     aviobj.Quality=100;
+%     open(aviobj);
+%     
+%     %Initialize the video structure to hold the frames
+% %     videoFrames.cdata=zeros(840,1120,3,'uint8');
+% %     videoFrames.colormap = [];
+% %     videoFrames(length(dt:dt:totalTime)).cdata =zeros(840,1120,3,'uint8');
+% %     videoFrames(length(dt:dt:totalTime)).colormap =[];
+% end
 
 %% Prepare cell to hold simulation info and set timers
 
@@ -150,8 +158,6 @@ fprintf("Generating grain centers and euler angles...\n");
 C = linspecer(numGrains); %color map with unique distinguishable colors 
 const.C = C; %save to constant dictionary
 
-%Generate disorientation distribution
-%plotMisorientationDist(grainMat)
 %% Find the node locations, grain corners, connectivity, and starting radii values
 
 fprintf("Generating node locations and connectivity matrices...\n");
@@ -174,22 +180,25 @@ codeTimer.initialization=toc; %end initilization timer
 
 if const.useCOMSOL==1
     %Generate poly_cp_2D_raw.java in the working directory
-    generateCOMSOLfile(constants);
+    fprintf("Generating COMSOL .java file...\n");
+    generateCOMSOLfile(const);
 
     %Generate the orientation1.txt, orientation2.txt, orientation3.txt,
     %u1.txt, u2.txt files in the /COMSOL_input/ directory
+    fprintf("Generating orientation files for COMSOL...\n");
     continuousToSpreadSheet(nodeLoc,nodeBelong,grainMat,const.realGridSize,const.gridSize,400);
 end
 %% Run the low-temperature deformation of the 2D poly crystal
 
 % Generate COMSOL output to produce accurate dislocation densities
 if const.useCOMSOL==1
+    fprintf("Running COMSOL CPFEM...\n");
     COMSOL_Succeed = simulateCOMSOL_CP();
     
     if COMSOL_Succeed ==1
-        fpritnf("COMSOL Crystal Plasticity model run successfully\n");
+        fprintf("COMSOL Crystal Plasticity model run successfully\n");
     else
-        fpritnf("Failed to run COMSOL Crystal Plasticity model\n");
+        fprintf("Failed to run COMSOL Crystal Plasticity model\n");
     end
 end
 %% Integrate the dislocation density from COMSOL if it exists
@@ -202,9 +211,19 @@ if const.useCOMSOL==1 && isfile("./COMSOL_output/dislocationDensity.txt")
     const.minDislocationDensity = min(grainMat(:,6));
     const.maxDislocationDensity = max(grainMat(:,6));
 end
+
+%% Calculate the change of misorientation due to dislocation absorption
+fprintf("Calculating change of misorientation due to dislocation absorption...\n");
+dislocations_misorientMat = dislocationAbsorption(grainMat,misorientMat,const); % use dislocation densities to calculate the change of misorientation
+
 %% Refine and Plot
-figure
-f = figure(1);
+
+%Create figure to plot on
+if const.plotMicrostructure
+    figure
+    f = figure(1);
+end
+
 iter = 1;
 
 for t = dt:dt:totalTime
@@ -233,16 +252,15 @@ for t = dt:dt:totalTime
     
     %Plot the grains and save to video
     tic
-    clf(f)
     if const.plotMicrostructure
+        clf(f)
         plotGrains(nodeBelong,nodeLoc,nodeConnect,grainMat,segRadius,const); %plot the grains to axis
         pause(0.001); %pause to generate the plot
-    end
-    if const.writeMovie && const.plotMicrostructure && mod(iter,const.saveMovieFreq)==0
-        set(gcf,'Position',[15 15 const.movieWidth,const.movieHeight]); %set the position and size of the figure of the figure
-        theframe = getframe(gcf);
-        videoFrames(round(iter/const.saveMovieFreq)) = theframe;
-        %frame_counter=frame_counter+1;
+        if const.writeMovie && mod(iter,const.saveMovieFreq)==0
+            set(gcf,'Position',[15 15 const.movieWidth,const.movieHeight]); %set the position and size of the figure of the figure
+            theframe = getframe(gcf);
+            videoFrames(round(iter/const.saveMovieFreq)) = theframe;
+        end
     end    
     codeTimer.plotGrains=codeTimer.plotGrains+toc;
     
@@ -269,6 +287,7 @@ save(sprintf('%s',const.movieTitle));
 if const.runPostProcessing==1   
     %Generate the movie associated with the simulation
     if const.writeMovie==1 %Record a movie if specified to do so   
+        moviename=sprintf(const.movieTitle+'.avi'); %update the name of the file
         aviobj=VideoWriter(moviename);
         aviobj.Quality=100;
 

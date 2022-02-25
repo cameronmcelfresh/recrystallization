@@ -72,11 +72,11 @@ for g = 1:numGrains
     
     %% Order and then plot the grain boundaries
     
-    b = boundary(grainNodePos(:,1),grainNodePos(:,2),.01);    
+    %b = boundary(grainNodePos(:,1),grainNodePos(:,2),.01);    
     %b = boundary(grainNodePos(:,1),grainNodePos(:,2));
     
-    %b = clockWiseOrder(grainNodePos(:,1),grainNodePos(:,2)); %construct the boundayr matrix by hand
-    %b=[b;b(1)]; %add the connection to the first node
+    b = clockWiseOrder(grainNodePos(:,1),grainNodePos(:,2)); %construct the boundayr matrix by hand
+    b=[b;b(1)]; %add the connection to the first node
     
     %Ordered list of points - add the starting point manually
     orderedGrainPoints = grainNodePos(b(1),:);
@@ -183,6 +183,10 @@ if constants.plotDislocationDensity %plot the colorbar for the dislocation densi
      colorbarObject.Label.String = 'Dislocation Density [m^-2]';
 end
 
+%Set the graph limits
+axis([0 constants.gridSize 0 constants.gridSize]);
+%Turn off the axis
+set(gca,'visible','off')
+
 fprintf("Total Grain Area =  %.3f %%\n",grainAreaSum*100/((gridLength-1)*(gridLength-1)));
 end
-

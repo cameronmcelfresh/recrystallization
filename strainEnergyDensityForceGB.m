@@ -14,8 +14,26 @@ nearbyGrainsNode1 = nearbyGrainsNode1(nearbyGrainsNode1~=0); %exclude zero
 nearbyGrainsNode2 = nodeBelong(nodeID2,:);
 nearbyGrainsNode2 = nearbyGrainsNode2(nearbyGrainsNode2~=0); %exclude zero
 
+%% Check to see if this is a boundary segment, if so, ignore the calculation
+
+if (any(nodeLoc(nodeID1,:)==1) && any(nodeLoc(nodeID2,:)==1)) || (any(nodeLoc(nodeID1,:)==constants.gridSize) && any(nodeLoc(nodeID2,:)==constants.gridSize))
+    sedForce = [0,0];
+    return
+end
+
 %% Find the two shared grains
 boundaryPair = intersect(nearbyGrainsNode1,nearbyGrainsNode2);
+
+% Error checking for wrong type of boundary - let the remeshing sort it out
+
+%% NOTE - may want to remove this exception in the future to avoid missed errors 
+if numel(boundaryPair)<2
+    fprintf("\t**** Warning - found less than 2 boundary grain neighbors, skipping SED GB force for %i -> %i ****\n",nodeID1,nodeID2);
+    sedForce = [0,0];
+    return
+end
+
+%%
 
 %Extract the grain number and dislocation density
 g1 = boundaryPair(1);

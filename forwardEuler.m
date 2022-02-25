@@ -5,7 +5,7 @@ function [posUpdates,nodeVel,segRadius] = forwardEuler(nodeBelong,grainMat,nodeC
 
 numNodes=length(nodeLoc);
 gridLength=constants.gridSize;
-mobility = constants.mobility; %use an arbitrary mobility value for now
+mobility = constants.mobility; % triple junction movility
 
 posUpdates=nodeVel.*constants.dt; %positional updates to apply at the end of the timestep
 
@@ -15,12 +15,14 @@ for n = 1:numNodes
     %Do not allow boundary nodes to move
     pos=nodeLoc(n,:);
     if ismember(1,pos) || ismember(gridLength,pos)
+        nodeVel(n,:)=[0,0];
         continue;
     end
     
     %Skip nodes with less than 2 connections as they are likely to soon be
     %remeshed
     if sum(ismember(nodeConnect(:,n),1))<3
+        nodeVel(n,:)=[0,0];
         continue;
     end
     
@@ -29,7 +31,11 @@ for n = 1:numNodes
     RSForce = readShockleyForce(n,nodeBelong,grainMat,nodeConnect,nodeLoc,misorientMat,segRadius,constants);
     
     %Calculate the updated velocity for the next timestep
-    nodeVel(n,:)=(RSForce)*mobility;
+    %nodeVel(n,:)=(RSForce)*mobility;
+    nodeVel(n,:)=(RSForce)*mobility/TJboundaryLength(n,nodeConnect,nodeLoc,constants);
+    
+    %Convert from real units to grid units
+    nodeVel(n,:)=nodeVel(n,:)*constants.gridSize/constants.realGridSize;
 end
 
 %% Calculate the force and velocity updates for all grain boundaries
@@ -45,6 +51,14 @@ if constants.useCurvature ==1 %only update the curvature if user specifies
 
             %Check to see if the connection exists
             if nodeConnect(n1,n2)==1
+                
+                %Check to see if boundary is less than 5% of grid size
+                if norm(nodeLoc(n1,:)-nodeLoc(n2,:))/constants.gridSize<0.05
+                    segRadius(n1,n2)=0;
+                    segRadius(n2,n1)=0;
+                    continue
+                end
+                
                 %Calculate the plastic strain energy density differential
                 %force,result is a 2D force vector
                 SEDForce = strainEnergyDensityForceGB(n1,n2,nodeLoc,nodeBelong,grainMat,constants); 
@@ -53,7 +67,7 @@ if constants.useCurvature ==1 %only update the curvature if user specifies
                 curvatureForce = curvatureForceGB(n1,n2,nodeLoc,segRadius,misorientMat,nodeBelong,constants);
 
                 %Sum the boundary forces
-                GBForce = SEDForce+curvatureForce/1E5; %curvature force is currently too high relative to SED force. Need to analyze units
+                GBForce = SEDForce+curvatureForce; %curvature force is currently too high relative to SED force. Need to analyze units
                 %GBForce = SEDForce;
 
                 %Calculate the velocity of the grain boundary
@@ -61,7 +75,7 @@ if constants.useCurvature ==1 %only update the curvature if user specifies
 
                 %Calculate the position update of the grain boundary (midpoint)
                 GBmidPointUpdate = GBVelocity*constants.dt;
-                %GBmidPointUpdate=GBmidPointUpdate*constants.gridSize/constants.realGridSize; %convert vector to simulation units
+                GBmidPointUpdate=GBmidPointUpdate*constants.gridSize/constants.realGridSize; %convert vector to simulation units
 
                 %Calculate the new radius value for the boundary given nodal
                 %updates and GB arc midpoint update. This function only handles

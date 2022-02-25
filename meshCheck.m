@@ -59,7 +59,13 @@ if constants.useCurvature==1 %only update the curvature if user specifies
             end
         end
     end
+end
 
+%% Check to see any out-of-bounds nodes
+outOfBoundsNodes = sum(sum(nodeLoc<1)) + sum(sum(nodeLoc>constants.gridSize));
+
+if outOfBoundsNodes
+    fprintf(" *** Warning: %i node(s) out of bounds of the grid\n",outOfBoundsNodes);
 end
 
 %% Make sure that none of the grains overlap

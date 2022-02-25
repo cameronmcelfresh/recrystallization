@@ -71,7 +71,11 @@ RSForce=-sum(RSForce);
 origNorm = norm(RSForce); %save the norm to use later 
 
 %% Read Shockley criteria assuming all equal misorientation values - dummy force
-RSForce = -sum(segmentUnitVec)*-100; %
+
+RSForce = sum(segmentUnitVec)*500; %% Force to use if we assume all equal
+%misorientation values between neighboring grains
+
+%%
 
 % %% Project the force onto the optimal dihedral angle direction
 % % Reference : https://www.mathworks.com/matlabcentral/answers/2216-projecting-a-vector-to-another-vector

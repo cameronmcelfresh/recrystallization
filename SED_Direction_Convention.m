@@ -5,13 +5,21 @@ function isTrue = SED_Direction_Convention(n1,n2,nodeLoc,nodeBelong,grainMat,seg
 %isTrue=1 if the curvature does abide by the SED force 
 %isTrue=0 if the curvature does not abide by the SED force 
 
-%Do not go through the computation if there is no curvature to the segment
-if segRadius(n1,n2)==0
+%% Do not go through the computation if there is no curvature to the segment
+% OR if it's a boundary segment
+if segRadius(n1,n2)==0 || (any(nodeLoc(n1,:)==1) && any(nodeLoc(n2,:)==1)) || (any(nodeLoc(n1,:)==constants.gridSize) && any(nodeLoc(n2,:)==constants.gridSize))
     isTrue=1;
     return
 end
 
-%Calculate the strain energy differential
+% %Ignore boundary connections...may remove in for future use
+% if (any([nodeLoc(n1,:),nodeLoc(n2,:)]==1)) || (any([nodeLoc(n1,:),nodeLoc(n2,:)]==constants.gridSize))
+%     isTrue=1;
+%     return
+% end
+
+
+%% Calculate the strain energy differential
 SEDForce = strainEnergyDensityForceGB(n1,n2,nodeLoc,nodeBelong,grainMat,constants);
 SEDForce=SEDForce/norm(SEDForce); %normalize the vector
 

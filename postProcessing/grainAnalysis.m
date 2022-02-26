@@ -1,13 +1,14 @@
 function [runningGrainSize,runningGrainCount] = grainAnalysis(storedInfo,maxIter)
-%grainAnalysis Function to analyze the change in grain size and count over
-%time. Returns the circle estimation diameter distriubtion of grain sizes
+%grainAnalysis Function to analyze the change in grain size, count, and dislocation density over
+%time. Returns the circle estimation diameter distriubtion of grain sizes.
 
 runningGrainSize=zeros(maxIter,1); %running list to hold the average grain size with circular diameter
 runningGrainArea=zeros(maxIter,1); %running list to hold the average grain size
 runningGrainCount=zeros(maxIter,1); %running list to hold the number of grains
 
-for iter = 1:maxIter %loop through each timestep
 
+for iter = 1:maxIter %loop through each timestep
+    
     nodeLoc=storedInfo{iter,1};
     nodeBelong=storedInfo{iter,2};
     %nodeConnect=storedInfo{iter,3};

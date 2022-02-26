@@ -17,7 +17,7 @@ numGrains = 100; %number of grains to pack into the grid
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=150; %minimum grain area before removing grain
 dt = 1; %timestep each iteration
-totalTime=2000; %total time to run the simulation [s]
+totalTime=3000; %total time to run the simulation [s]
 
 const.Temp = const.T; %Temperature [K]
 
@@ -57,7 +57,7 @@ const.dt_COMSOL = 7e-6; %timestep for COMSOL to use [s]
 %calculate the total time based on the length of the simulation box and
 %strain rate
 %const.totalTime_COMSOL = 35e-6; % total time to run the simulation in COMSOL
-const.totalTime_COMSOL = 35e-6 * (0.003/const.total_strain); % total time to run the simulation in COMSOL
+const.totalTime_COMSOL = 35e-6 * (const.total_strain/0.003); % total time to run the simulation in COMSOL
 const.COMSOL_path = "/u/home/c/cmcelfre/project-jmarian/RX/"; % path for COMSOL file
 const.comsol_file_name = "./COMSOL_HandshakeFunctions/poly_cp_2D_raw.java"; %original java file to copy then rewrite with correct variables
 const.comsol_written_name = "poly_cp_2D_raw.java";

@@ -1,8 +1,8 @@
 %% Script to run a parametric study of CPFEM + RX
 
 %% Parametric space to explore
-temperatures = [600,700]; %Temperature in K
-total_strain = [0.002,0.004]; %Total strain to run the CPFEM simulation
+temperatures = [500,600,700]; %Temperature in K
+total_strain = [0.001,0.003,0.005]; %Total strain to run the CPFEM simulation
 replicas = 1; % # of replicas to run at each temperature/strain combination
 
 %% Title of the folders
@@ -47,13 +47,21 @@ for i = 1:length(temperatures)
                 end
             end
             
-            %% Move the output CPFEM_RX.mat file and COMSOL_output files
+            %% Move the output CPFEM_RX.mat, COMSOL_output, and COMSOL output text file
             try
                 movefile('CPFEM_RX.mat',fullpath);
             end
             
             try
                 movefile('./COMSOL_output/*',fullpath+"COMSOL_output/");
+            end
+            
+            try
+                movefile('./outputText.txt',fullpath+"outputText.txt");
+            end
+            
+            try
+                movefile('./SOLVED_Model.mph',fullpath+"SOLVED_Model.mph");
             end
             
             % Clear the COMSOL_input folder
@@ -69,6 +77,9 @@ fclose(fileID); % close the simulation params text file
 
 if postProcessParametric==1
 
+    fig_dislocationDensities = figure;
+    fig_grainCount = figure;
+    
     dislocationDensities = zeros(total_trials,1); % average dislocation density of final structure
     totalGrains = zeros(total_trials,1); % total number of grains in final structure
     lambda = zeros(total_trials,1); % lambda = mTJ*a / mGB, unitless conversion factor between GB and TJ mobility
@@ -89,7 +100,6 @@ if postProcessParametric==1
                 %Load in the necessary variables
                 load(studyTitle+'/study'+string(counter)+'/CPFEM_RX.mat');
 
-                
                 %Find the total number of grains and dislocation density
                 totalGrains(counter+1) = sum(grainMat(:,2)>0);
                 dislocationDensities(counter+1) = extractDislocationDensity(storedInfo,gridSize,iter-1);
@@ -99,6 +109,20 @@ if postProcessParametric==1
                 tempColumn(counter+1) =temperatures(i);
                 strainColumn(counter+1) = total_strain(j);
                 
+                %Plot the grain count
+                [GrainCount] = runningGrainCount(storedInfo,iter-1);
+                figure(fig_grainCount);
+                hold on
+                plot([1:iter-1]*const.dt*const.inflationParameter,GrainCount,...
+                    'DisplayName',sprintf("T = %i, Total Strain = %0.3f",temperatures(i),total_strain(j)));
+
+                %Plot the dislocation density evolution for the simulation
+                running_DD = dislocationDensityEvolution(storedInfo,const,iter-1);
+                figure(fig_dislocationDensities);
+                hold on
+                plot([1:iter-1]*const.dt*const.inflationParameter,running_DD,...
+                    'DisplayName',sprintf("T = %i, Total Strain = %0.3f",temperatures(i),total_strain(j)));
+                
                 %Clear the variables that were loaded from each study
                 allVar = who('-file',studyTitle+'/study'+string(counter)+'/CPFEM_RX.mat');
                 for m = 1:length(allVar)
@@ -106,10 +130,26 @@ if postProcessParametric==1
                 end
                 
                 counter=counter+1;
+                
             end
         end
     end
 
+%% Make labels for figures
+    
+figure(fig_dislocationDensities)
+xlabel("Time [s]");
+ylabel("Dislocation Density [m^-2]");
+set(gca,'Xscale','log')
+legend
+
+figure(fig_grainCount)
+xlabel("Time [s]");
+ylabel("Number of Grains [#]");
+set(gca,'Xscale','log')
+legend
+
+    
 %% Create heatmaps
 
 % total number of grains

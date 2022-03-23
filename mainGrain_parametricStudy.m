@@ -27,7 +27,7 @@ for i = 1:length(temperatures)
                 fprintf("***** Starting Study "+string(iter)+"/" + string(total_trials) + ", "+ string(iter/total_trials*100)+"%% complete *****\n");
 
                 %% Write line to simulation simparams file
-                fprintf(fileID,sprintf("%0.0f\t%0.4f\t%i\n",temperatures(i),total_strain(j),iter));
+                fprintf(fileID,sprintf("%0.0f\t%0.4f\t%0.4f\t%i\n",temperatures(i),total_strain(j),TJ_mobilityRatio(m),iter));
 
                 %% Make the directory for the folder
                 fullpath = studyTitle + '/study' + string(iter)+"/";
@@ -121,22 +121,22 @@ if postProcessParametric==1
                     [GrainCount] = runningGrainCount(storedInfo,iter-1);
                     figure(fig_grainCount);
                     hold on
-                    plot([1:iter-1]*const.dt*const.inflationParameter,GrainCount,...
-                        'DisplayName',sprintf("T = %i, Total Strain = %0.3f",temperatures(i),total_strain(j)));
+                    plot((1:iter-1)*const.dt*const.inflationParameter,GrainCount,...
+                        'DisplayName',sprintf("T = %i, Total Strain = %0.3f, TJ mobility Ratio=%0.3f",temperatures(i),total_strain(j),TJ_mobilityRatio(m)));
 
                     %Plot the dislocation density evolution for the simulation
                     running_DD = dislocationDensityEvolution(storedInfo,const,iter-1);
                     figure(fig_dislocationDensities);
                     hold on
-                    plot([1:iter-1]*const.dt*const.inflationParameter,running_DD,...
-                        'DisplayName',sprintf("T = %i, Total Strain = %0.3f",temperatures(i),total_strain(j)));
+                    plot((1:iter-1)*const.dt*const.inflationParameter,running_DD,...
+                        'DisplayName',sprintf("T = %i, Total Strain = %0.3f, TJ mobility Ratio=%0.3f",temperatures(i),total_strain(j),TJ_mobilityRatio(m)));
 
                     %Plot the percent RX of the microstructure
                     percent_RX = percentRecrystallization(storedInfo,iter-1,const);
                     figure(fig_percentRX);
                     hold on
-                    plot([1:iter-2]*const.dt*const.inflationParameter,percent_RX./max(percent_RX),...
-                        'DisplayName',sprintf("T = %i, Total Strain = %0.3f",temperatures(i),total_strain(j)));   
+                    plot((1:iter-2)*const.dt*const.inflationParameter,percent_RX./max(percent_RX),...
+                        'DisplayName',sprintf("T = %i, Total Strain = %0.3f, TJ mobility Ratio=%0.3f",temperatures(i),total_strain(j),TJ_mobilityRatio(m)));   
 
 
                     %Clear the variables that were loaded from each study
@@ -174,25 +174,25 @@ legend
     
 %% Create heatmaps
 
-% total number of grains
-figure
-heatmap(string(temperatures),string(total_strain),reshape(totalGrains,length(temperatures),length(total_strain)));
-title('Total number of grains');
-xlabel("Temperature [K]");
-ylabel("Total Strain");
-
-% average dislocationDensities
-figure
-heatmap(string(temperatures),string(total_strain),reshape(dislocationDensities,length(temperatures),length(total_strain)));
-title('Final Dislocation Density');
-xlabel("Temperature [K]");
-ylabel("Total Strain");
-
-% lambda parameter
-figure
-heatmap(string(temperatures),string(total_strain),reshape(lambda,length(temperatures),length(total_strain)))
-title('Lambda Parameter');
-xlabel("Temperature [K]");
-ylabel("Total Strain");
+% % total number of grains
+% figure
+% heatmap(string(temperatures),string(total_strain),reshape(totalGrains,length(temperatures),length(total_strain)));
+% title('Total number of grains');
+% xlabel("Temperature [K]");
+% ylabel("Total Strain");
+% 
+% % average dislocationDensities
+% figure
+% heatmap(string(temperatures),string(total_strain),reshape(dislocationDensities,length(temperatures),length(total_strain)));
+% title('Final Dislocation Density');
+% xlabel("Temperature [K]");
+% ylabel("Total Strain");
+% 
+% % lambda parameter
+% figure
+% heatmap(string(temperatures),string(total_strain),reshape(lambda,length(temperatures),length(total_strain)))
+% title('Lambda Parameter');
+% xlabel("Temperature [K]");
+% ylabel("Total Strain");
 
 end

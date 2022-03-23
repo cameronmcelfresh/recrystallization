@@ -6,68 +6,30 @@ addpath("./postProcessing");
 %add the functions to facilitate the COMSOL handshake and data passing
 addpath("./COMSOL_HandshakeFunctions");
 
-%% To-do list
-
-% COMSOL Handshake
-    % set the print statements to print to an output file as opposed the
-        % command window for hoffman usage
-    % functions to handle the initialization of COMSOL/RX tradeoff
-    % writing/compiling of new comsol.java files
-
-% Physics Implementations
-    % get rid of bug where small grains have their radius rapidly switch
-        % signs between positive and negative (due to restoring curvature
-        % force). Alternatively, grains of a certain (small) size can be
-        % restricted from having curvature. 
-    % check to see if the magnitude of the curvature force is on the same
-        % scale as the magnitude of the plastic strain energy differential
-        % force
-    % temperature-based mobility
-    % node-specific mobility to relate to the node velocity
-    % plastic strain density distribution as a driving force for boundary
-        % mobility
-    % curvature of segments based on node velocities
-
-% Post-simulation analysis
-    % calculation of GB lengths of certain boundaries (HABG, LAGB, etc.)
-    
-% Unit Tests
-    % no points outside of the boundary
-    % no crossing segments
-    
-% "Other"
-    % write more thorough descriptions for all the variables and functions
-    % organize the functions in different directories using the "addPath"
-        % command so debugging will be easier 
-    % look into using a more nuanced data structure for code readability
-    % explore speedups
-    % go through and remove (or explain) unused variables/code
-
 %% Physical Variables
 
 gridSize = 1000; % side length for square grid of size (gridSize,gridSize) when first constructing the vertices
 realGridSize=3e-6; %"true" size of the grid. Relevant to the velocity of the boundary motion
-numGrains = 100; %number of grains to pack into the grid
+numGrains = 20; %number of grains to pack into the grid
+const.realGridSize=realGridSize;
+const.gridSize=gridSize;
+const.numGrains = numGrains;
 
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=150; %minimum grain area before removing grain
 dt = 1; %timestep each iteration
-totalTime=5000; %total time to run the simulation [s]
+totalTime=200; %total time to run the simulation [s]
 
-const.Temp = 650; %Temperature [K]
+const.Temp =800; %Temperature [K]
 
 %Mobility Parameters
-const.mobilityGB_Mo = 5.366; % arrhenius pre-factor [m^4 J^-1 s^-1]
-const.mobilityGB_Q = 353960; % boundary activation energy [J mol^-1]
-const.Lambda = 1.76*exp(0.0048*(const.Temp-273))+1.4*10^(-119)*exp(0.6954*(const.Temp-273)); %lambda = mTJ*a / mGB, unitless conversion factor between GB and TJ mobility. Fitting from data in excel
-const.mobilityGB= const.mobilityGB_Mo*exp(-const.mobilityGB_Q/(8.314*const.Temp));  % 1E-8; %grain boundary mobility [m^3 J^-1 s^-1]
-%const.mobilityTJ_a = sqrt(realGridSize*realGridSize/(numGrains*(3.1415/2))); % assumed constant boundary length 
-const.mobility=const.mobilityGB*const.Lambda; %triple junction mobility [m^3 J^-1 s^-1] - units to be converted to [m^2 J^-1 s^-1] after dividing by the TJ average boundary length in forwardEuler
-
+const.TJ_mobilityRatio = 100; % Multiplicative factor to find the triple junction mobility using the GB mobility
+const.mobilityGB_Q = 3; % grain boundary activation energy [eV]
+const.mobilityGB_max = max(mobilityGB_lookup(const,sqrt(const.realGridSize^2/const.numGrains),(1:60))); %maimum grain boundary mobility
+const.mobility=const.mobilityGB_max*const.TJ_mobilityRatio; % Reduced Triple junction mobility in units of [m^3/J/s]
 const.inflationParameter = 10^-18/const.mobility; % factor to artificially increase or decrease the mobilities
-%const.inflationParameter = 1; % factor to artificially increase or decrease the mobilities
 
-const.mobilityGB=const.mobilityGB*const.inflationParameter;
+% Scale the constant TJ mobility
 const.mobility=const.mobility*const.inflationParameter;
 
 const.dt = dt; % timestep for RX model to use
@@ -89,7 +51,7 @@ const.L = 10^-6; % assumed length of the boundary [m]
 %COMSOL Interaction Variables
 const.useCOMSOL = 0; %whether or not to co-evolve the CPFEM COMSOL code for realistic dislocation densities
 const.strainRate = 100; % strain rate - used in generation of COMSOL .java file
-const.dt_COMSOL = 7e-6; %timestep for COMSOL to use [s]
+const.dt_COMSOL = 1e-6; %timestep for COMSOL to use [s]
 const.totalTime_COMSOL = 35e-6; % total time to run the simulation in COMSOL
 const.COMSOL_path = "/u/home/c/cmcelfre/project-jmarian/RX/"; % path for COMSOL file
 const.comsol_file_name = "./COMSOL_HandshakeFunctions/poly_cp_2D_raw.java"; %original java file to copy then rewrite with correct variables
@@ -99,13 +61,16 @@ const.comsol_written_name = "poly_cp_2D_raw.java";
 %dislocation density map and also for assigning dislocation densities (if
 %needed)
 const.minDislocationDensity = 5e12;
-const.maxDislocationDensity = 5e13;
+const.maxDislocationDensity = 5e14;
 
 %Scale ratio for the x and y directions for elongated grain structures
 const.scalex = 0.3;
 const.scaley = 0.3;
 
 %% Non-physical Variables
+
+%const.asymetricMicro = 0; %1==build an assymetric microstructure with small grains in side regions, 0== build normal microstructure
+%const.asymetricGrains = 26; %number of grains to build on the corners iff asymetricMicro==1
 
 const.plotMicrostructure=1; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
 const.plotBoundaries = 0; %1==only plot the boundaries of all the grains, exclude any color. Default is random coloring
@@ -163,7 +128,8 @@ tic %start timer for initilization
 
 fprintf("Generating grain centers and euler angles...\n");
 [grid,grainMat] = buildMicro(gridSize,numGrains,const);
-C = linspecer(numGrains); %color map with unique distinguishable colors 
+
+C = linspecer(numGrains); %color map with unique distinguishable colors
 const.C = C; %save to constant dictionary
 
 %% Find the node locations, grain corners, connectivity, and starting radii values

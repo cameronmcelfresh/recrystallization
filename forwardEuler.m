@@ -32,7 +32,7 @@ for n = 1:numNodes
     
     %Calculate the updated velocity for the next timestep
     %nodeVel(n,:)=(RSForce)*mobility;
-    nodeVel(n,:)=(RSForce)*mobility/TJboundaryLength(n,nodeConnect,nodeLoc,constants);
+    nodeVel(n,:)=(RSForce)*constants.mobility;
     
     %Convert from real units to grid units
     nodeVel(n,:)=nodeVel(n,:)*constants.gridSize/constants.realGridSize;
@@ -51,13 +51,22 @@ if constants.useCurvature ==1 %only update the curvature if user specifies
 
             %Check to see if the connection exists
             if nodeConnect(n1,n2)==1
-                
-                %Check to see if boundary is less than 5% of grid size
-                if norm(nodeLoc(n1,:)-nodeLoc(n2,:))/constants.gridSize<0.05
-                    segRadius(n1,n2)=0;
-                    segRadius(n2,n1)=0;
-                    continue
+
+                sharedGrains = sharedGrainLookUp(n1,n2,nodeBelong); %find the grains that are shared by the n1 <-> n2 grain boundary
+                if all(sharedGrains==0)
+                    misorientTheta = misorientMat(n1,n2); % lookup misroientation value for the boundary
+                else
+                    misorientTheta=45; % sit-in assumption if n1 <-> n2 is an edge case or part or on the edge of the simulation boundary
                 end
+                    
+                boundaryLength = norm(nodeLoc(n1,:)-nodeLoc(n2,:))/constants.gridSize*constants.realGridSize; %boundary length in real units [m] 
+                
+%                 %Check to see if boundary is less than 5% of grid size
+%                 if boundaryLength/constants.realGridSize<0.05
+%                     segRadius(n1,n2)=0;
+%                     segRadius(n2,n1)=0;
+%                     continue
+%                 end
                 
                 %Calculate the plastic strain energy density differential
                 %force,result is a 2D force vector
@@ -69,10 +78,17 @@ if constants.useCurvature ==1 %only update the curvature if user specifies
                 %Sum the boundary forces
                 GBForce = SEDForce+curvatureForce; %curvature force is currently too high relative to SED force. Need to analyze units
                 %GBForce = SEDForce;
-
+                
+                %If there is no SED/curvature force, skip the new radius
+                %calculation
+                if all(GBForce==0)
+                    continue;
+                end
+                
                 %Calculate the velocity of the grain boundary
-                GBVelocity = GBForce*constants.mobilityGB;
-
+                GBmobility = mobilityGB_lookup(constants,boundaryLength,misorientTheta)*constants.inflationParameter; % lookup the grain boundary mobility
+                GBVelocity = GBForce*GBmobility;
+                
                 %Calculate the position update of the grain boundary (midpoint)
                 GBmidPointUpdate = GBVelocity*constants.dt;
                 GBmidPointUpdate=GBmidPointUpdate*constants.gridSize/constants.realGridSize; %convert vector to simulation units

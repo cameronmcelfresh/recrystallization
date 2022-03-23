@@ -105,7 +105,7 @@ for grain = 1:numGrains
     
     %Find the boundary connectivity
     %b = boundary(grainNodePos(:,1),grainNodePos(:,2),0.1);
-    b = clockWiseOrder(grainNodePos(:,1),grainNodePos(:,2)); %construct the boundayr matrix by hand
+    b = clockWiseOrder(grainNodePos(:,1),grainNodePos(:,2)); %construct the boundary matrix by hand
     b=[b;b(1)]; %add the connection to the first node
     
     for indB = 1:length(b)-1

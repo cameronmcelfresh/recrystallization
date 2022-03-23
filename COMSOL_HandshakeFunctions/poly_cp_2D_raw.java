@@ -258,11 +258,11 @@ public class poly_cp_2D_raw {
     model.param().set("m", "20");
     model.param().set("b", "2.48e-10[m]");
     model.param().set("hn", "0.125");
-    model.param().set("g0", "90[MPa]");
+    model.param().set("g0", "250[MPa]");
     model.param().set("rho0", "1e12[m^-2]");
     model.param().set("n", "100");
     model.param().set("k1", "450");
-    model.param().set("k20", "14");
+    model.param().set("k20", "1.25");
     model.param().set("vk0", "1e10[1/s]");
 
     model.component().create("comp1", false);
@@ -977,7 +977,7 @@ public class poly_cp_2D_raw {
     model.component("comp1").physics("dode2").feature("dode1").set("f", "doth");
     model.component("comp1").physics("dode2").feature("init1").set("h", "h_i(x,y)");
 
-    model.component("comp1").mesh("mesh1").feature("size").set("hauto", 5);
+    model.component("comp1").mesh("mesh1").feature("size").set("hauto", 8);
     model.component("comp1").mesh("mesh1").feature("ftri1").set("method", "del");
     model.component("comp1").mesh("mesh1").run();
 

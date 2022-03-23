@@ -24,7 +24,7 @@ if constants.plotBoundaries == 1
 
                  %Extract the curvature points
                  curvePoints = arcPoints(nodeLoc(i,:),nodeLoc(j,:),segRadius(i,j),5); %calculate the curvature point
-                 plot([nodeLoc(i,1);curvePoints(:,1);nodeLoc(j,1)],[nodeLoc(i,2);curvePoints(:,2);nodeLoc(j,2)]);
+                 plot([nodeLoc(i,1);curvePoints(:,1);nodeLoc(j,1)],[nodeLoc(i,2);curvePoints(:,2);nodeLoc(j,2)],'k');
                  hold on
 
                 if plotNodeNumbers==1
@@ -38,7 +38,10 @@ if constants.plotBoundaries == 1
         end
     end
     scatter(nodeLoc(:,1),nodeLoc(:,2),55,'filled');
-    
+    set(gca,'xtick',[])
+    set(gca,'xticklabel',[])
+    set(gca,'ytick',[])
+    set(gca,'yticklabel',[])    
     return %exit the function before plotting the other variables
 end
 

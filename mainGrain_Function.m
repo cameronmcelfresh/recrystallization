@@ -12,25 +12,26 @@ addpath("./COMSOL_HandshakeFunctions");
 
 gridSize = 1000; % side length for square grid of size (gridSize,gridSize) when first constructing the vertices
 realGridSize=3e-6; %"true" size of the grid. Relevant to the velocity of the boundary motion
-numGrains = 100; %number of grains to pack into the grid
+numGrains = 40; %number of grains to pack into the grid
+const.realGridSize=realGridSize;
+const.gridSize=gridSize;
+const.numGrains = numGrains;
 
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=150; %minimum grain area before removing grain
-dt = 1; %timestep each iteration
-totalTime=3000; %total time to run the simulation [s]
+dt = 2; %timestep each iteration
+totalTime=1000; %total time to run the simulation [s]
 
 const.Temp = const.T; %Temperature [K]
 
 %Mobility Parameters
-const.mobilityGB_Mo = 5.366; % arrhenius pre-factor [m^4 J^-1 s^-1]
-const.mobilityGB_Q = 353960; % boundary activation energy [J mol^-1]
-const.Lambda = 1.76*exp(0.0048*(const.Temp-273))+1.4*10^(-119)*exp(0.6954*(const.Temp-273)); %lambda = mTJ*a / mGB, unitless conversion factor between GB and TJ mobility. Fitting from data in excel
-const.mobilityGB= const.mobilityGB_Mo*exp(-const.mobilityGB_Q/(8.314*const.Temp));  % 1E-8; %grain boundary mobility [m^3 J^-1 s^-1]
-const.mobility=const.mobilityGB*const.Lambda; %triple junction mobility [m^3 J^-1 s^-1] - units to be converted to [m^2 J^-1 s^-1] after dividing by the TJ average boundary length in forwardEuler
-
+%const.TJ_mobilityRatio = 1; % Multiplicative factor to find the triple junction mobility using the GB mobility
+const.mobilityGB_Q = 3; % grain boundary activation energy [eV]
+const.mobilityGB_max = max(mobilityGB_lookup(const,sqrt(const.realGridSize^2/const.numGrains),(1:60))); %maimum grain boundary mobility
+const.mobility=const.mobilityGB_max*const.TJ_mobilityRatio; % Reduced Triple junction mobility in units of [m^3/J/s]
 const.inflationParameter = 10^-18/const.mobility; % factor to artificially increase or decrease the mobilities
 
-const.mobilityGB=const.mobilityGB*const.inflationParameter;
+% Scale the constant TJ mobility
 const.mobility=const.mobility*const.inflationParameter;
 
 const.dt = dt; % timestep for RX model to use
@@ -42,7 +43,7 @@ const.G=78*1E9; %Shear Modulus [Pa]
 const.b=2.8*10^-10; %Burgers vector [m]
 const.v=0.28; %Poisson's ratio
 const.coreWidth=2*const.b; %Dislocation Core Width [m]
-const.useCurvature = 1; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
+const.useCurvature = 0; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
 
 %Variables to influence change of misorientation due to dislocation
 %absorption (boundary nucleation)
@@ -52,7 +53,7 @@ const.L = 10^-6; % assumed length of the boundary [m]
 %COMSOL Interaction Variables
 %const.useCOMSOL = 0; %whether or not to co-evolve the CPFEM COMSOL code for realistic dislocation densities
 const.strainRate = 100; % strain rate - used in generation of COMSOL .java file
-const.dt_COMSOL = 7e-6; %timestep for COMSOL to use [s]
+const.dt_COMSOL = 1e-6; %timestep for COMSOL to use [s]
 
 %calculate the total time based on the length of the simulation box and
 %strain rate

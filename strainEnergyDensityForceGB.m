@@ -2,8 +2,6 @@ function [sedForce] = strainEnergyDensityForceGB(nodeID1,nodeID2,nodeLoc,nodeBel
 %strainEnergyDensityForce Function to calculate the strain energy density
 %force on a GB - calculate across each boundary and then add to each
 
-sedForces = [];
-
 G=constants.G; %Shear Modulus [Pa]
 b=constants.b; %Burgers vector [m]
 

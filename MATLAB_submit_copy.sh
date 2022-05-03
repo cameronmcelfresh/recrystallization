@@ -4,7 +4,7 @@
 #$ -o $JOB_NAME_joblog.$JOB_ID
 #$ -j y
 # Edit the line below as needed
-#$ -l h_rt=16:00:00,h_data=20G -pe shared 8 
+#$ -l h_rt=16:00:00,h_data=20G,arch=amd*
 # Email address to notify
 #$ -M $USER@mail
 # Notify when

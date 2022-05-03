@@ -8,7 +8,7 @@ Mo = -8.710215E-08*theta.^6 + 1.824603E-05*theta.^5 - 1.509285E-03*theta.^4 + 6.
     1.340587E+00*theta.^2 + 1.390459E+01*theta;
 
 % Temperature dependent GB mobility in m^3/J/s
-GBmobility = Mo .* exp(-const.mobilityGB_Q / (8.314*10^-5*const.Temp));
+GBmobility = Mo .* exp(-const.mobilityGB_Q / (8.314*10^-5*(const.Temp+273.15)));
 
 % Reduce to grain boundary mobility with respect to the boundary length
 GBmobility_reduced = GBmobility/GB_length;

@@ -10,7 +10,7 @@ addpath("./COMSOL_HandshakeFunctions");
 
 gridSize = 1000; % side length for square grid of size (gridSize,gridSize) when first constructing the vertices
 realGridSize=3e-6; %"true" size of the grid. Relevant to the velocity of the boundary motion
-numGrains = 20; %number of grains to pack into the grid
+numGrains = 150; %number of grains to pack into the grid
 const.realGridSize=realGridSize;
 const.gridSize=gridSize;
 const.numGrains = numGrains;
@@ -18,16 +18,16 @@ const.numGrains = numGrains;
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=150; %minimum grain area before removing grain
 dt = 1; %timestep each iteration
-totalTime=200; %total time to run the simulation [s]
+totalTime=1000; %total time to run the simulation [s]
 
-const.Temp =800; %Temperature [K]
+const.Temp =800; %Temperature [C]
 
 %Mobility Parameters
-const.TJ_mobilityRatio = 100; % Multiplicative factor to find the triple junction mobility using the GB mobility
+const.TJ_mobilityRatio = 1; % Multiplicative factor to find the triple junction mobility using the GB mobility
 const.mobilityGB_Q = 3; % grain boundary activation energy [eV]
 const.mobilityGB_max = max(mobilityGB_lookup(const,sqrt(const.realGridSize^2/const.numGrains),(1:60))); %maimum grain boundary mobility
 const.mobility=const.mobilityGB_max*const.TJ_mobilityRatio; % Reduced Triple junction mobility in units of [m^3/J/s]
-const.inflationParameter = 10^-18/const.mobility; % factor to artificially increase or decrease the mobilities
+const.inflationParameter = 10^-11/const.mobility; % factor to artificially increase or decrease the mobilities
 
 % Scale the constant TJ mobility
 const.mobility=const.mobility*const.inflationParameter;
@@ -72,7 +72,7 @@ const.scaley = 0.3;
 %const.asymetricMicro = 0; %1==build an assymetric microstructure with small grains in side regions, 0== build normal microstructure
 %const.asymetricGrains = 26; %number of grains to build on the corners iff asymetricMicro==1
 
-const.plotMicrostructure=1; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
+const.plotMicrostructure=0; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
 const.plotBoundaries = 0; %1==only plot the boundaries of all the grains, exclude any color. Default is random coloring
 const.plotNodeNumbers = 0; %1==plot the nodeIDs and boundary connections each iteration
 const.plotDislocationDensity = 1; %1==plot the dislocation density of each grain instead of a random color

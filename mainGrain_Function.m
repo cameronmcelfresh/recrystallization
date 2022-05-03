@@ -12,7 +12,7 @@ addpath("./COMSOL_HandshakeFunctions");
 
 gridSize = 1000; % side length for square grid of size (gridSize,gridSize) when first constructing the vertices
 realGridSize=3e-6; %"true" size of the grid. Relevant to the velocity of the boundary motion
-numGrains = 40; %number of grains to pack into the grid
+numGrains = 100; %number of grains to pack into the grid
 const.realGridSize=realGridSize;
 const.gridSize=gridSize;
 const.numGrains = numGrains;
@@ -20,16 +20,16 @@ const.numGrains = numGrains;
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=150; %minimum grain area before removing grain
 dt = 2; %timestep each iteration
-totalTime=1000; %total time to run the simulation [s]
+totalTime=1500; %total time to run the simulation [s]
 
-const.Temp = const.T; %Temperature [K]
+const.Temp = const.T; %Temperature [C]
 
 %Mobility Parameters
 %const.TJ_mobilityRatio = 1; % Multiplicative factor to find the triple junction mobility using the GB mobility
 const.mobilityGB_Q = 3; % grain boundary activation energy [eV]
 const.mobilityGB_max = max(mobilityGB_lookup(const,sqrt(const.realGridSize^2/const.numGrains),(1:60))); %maimum grain boundary mobility
 const.mobility=const.mobilityGB_max*const.TJ_mobilityRatio; % Reduced Triple junction mobility in units of [m^3/J/s]
-const.inflationParameter = 10^-18/const.mobility; % factor to artificially increase or decrease the mobilities
+const.inflationParameter = 5*10^-12/const.mobility; % factor to artificially increase or decrease the mobilities
 
 % Scale the constant TJ mobility
 const.mobility=const.mobility*const.inflationParameter;
@@ -43,7 +43,7 @@ const.G=78*1E9; %Shear Modulus [Pa]
 const.b=2.8*10^-10; %Burgers vector [m]
 const.v=0.28; %Poisson's ratio
 const.coreWidth=2*const.b; %Dislocation Core Width [m]
-const.useCurvature = 0; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
+const.useCurvature = 1; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
 
 %Variables to influence change of misorientation due to dislocation
 %absorption (boundary nucleation)

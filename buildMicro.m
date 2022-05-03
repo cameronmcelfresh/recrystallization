@@ -141,6 +141,7 @@ grainMat = ones(grainNum,8);
 % column 6 has the dislocation density of the grain
 % column 7 has the average u1 component of the deformation in the grian
 % column 8 has the average u2 component of the deformation in the grain
+% column 9 has the Schmid factor (to be calculated during post-processing)
 
 %% Assign a random dislocation density to the grain
 

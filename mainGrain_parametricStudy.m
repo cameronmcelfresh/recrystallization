@@ -1,33 +1,48 @@
 %% Script to run a parametric study of CPFEM + RX
 
 %% Parametric space to explore
-temperatures = [400,800]; %Temperature in K
+temperatures = [400,800]; %Temperature in C
 total_strain = [0.01,0.04]; %Total strain to run the CPFEM simulation
 TJ_mobilityRatio = [0.1,100]; %Total strain to run the CPFEM simulation
 constants.useCOMSOL = 0; %whether or not to co-evolve the CPFEM COMSOL code for realistic dislocation densities
 
 replicas = 1; % # of replicas to run at each temperature/strain combination
 constants.plotMicrostructure=0; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
-%% Title of the folders
+%% Title of the folders and code for restarting if necessary
+
+restartSim = 0; %restartSim==1 then we are restarting from a simulation that didnt finish
+restartIter = 1; % iteration to restart from
 studyTitle = "parametricStudy";
-mkdir(studyTitle);
+total_trials = length(temperatures)*length(total_strain)*length(TJ_mobilityRatio)*replicas; % total number of simulations to run
+fileID = fopen(studyTitle+'/simParams.txt','a');
+
+if restartSim==0
+    mkdir(studyTitle);
+    fprintf(fileID,'temperature\tstrain\tTJmobilityRatio\tlabel\n');
+end
+
 postProcessParametric = 0; %1==run post processing analysis after parametric study, 0==don't run analysis of parametric study data
 
 %% Run parametric study
 iter = 0;
 repeats = 0;
-total_trials = length(temperatures)*length(total_strain)*length(TJ_mobilityRatio)*replicas; % total number of simulations to run
-fileID = fopen(studyTitle+'/simParams.txt','w');
-fprintf(fileID,'temperature\tstrain\tlabel\n');
+
 for i = 1:length(temperatures)
     for j = 1:length(total_strain)
         for m = 1:length(TJ_mobilityRatio)
             for k = 1:replicas % repeat for the necessary number of replicas
             
+                
+                if restartSim==1 && iter<restartIter
+                    iter = iter+1;
+                    fprintf("Skipping iter "+ string(iter) + " because of restarting simulation -- \n");
+                    continue;
+                end
+                
                 fprintf("***** Starting Study "+string(iter)+"/" + string(total_trials) + ", "+ string(iter/total_trials*100)+"%% complete *****\n");
 
                 %% Write line to simulation simparams file
-                fprintf(fileID,sprintf("%0.0f\t%0.4f\t%0.4f\t%i\n",temperatures(i),total_strain(j),TJ_mobilityRatio(m),iter));
+                fprintf(fileID,sprintf("%0.0f\t%0.3f\t%4.2f\t%i\n",temperatures(i),total_strain(j),TJ_mobilityRatio(m),iter));
 
                 %% Make the directory for the folder
                 fullpath = studyTitle + '/study' + string(iter)+"/";

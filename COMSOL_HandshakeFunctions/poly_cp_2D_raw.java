@@ -262,7 +262,7 @@ public class poly_cp_2D_raw {
     model.param().set("rho0", "1e12[m^-2]");
     model.param().set("n", "100");
     model.param().set("k1", "450");
-    model.param().set("k20", "1.25");
+    model.param().set("k20", "0.25");
     model.param().set("vk0", "1e10[1/s]");
 
     model.component().create("comp1", false);

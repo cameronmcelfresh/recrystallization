@@ -9,18 +9,26 @@ splitDist=1.25*minRemeshDistance; %arbitrary distance to split the nodes
 
 n=1;
 while n<numNodes+1
-    numConnections = length(unique(nodeBelong(n,:)))-1;
+    numGrainsPartOf = length(unique(nodeBelong(n,:)))-1; % number of grains that this node is a part of
+    numConnects = sum(nodeConnect(n,:)); % number of connections out of this node
     
-    if numConnections==5        
-       fprintf("\tNode %i belongs to >4 grains (%i grains,quadruple+ junction)\n",n,numConnections);
+    if numGrainsPartOf==5        
+       fprintf("\tNode %i belongs to >4 grains (%i grains,quadruple+ junction)\n",n,numGrainsPartOf);
        [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel] = randomSplit5WayNode(n,nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance); 
        n=1;
        continue;
     end
     
-    if numConnections>3
+    %If the node belongs to more than 3 grains and more than 3 connections
+    if numGrainsPartOf >3 && numConnects>3
 
-        fprintf("\tNode %i belongs to >3 grains (%i grains,quadruple+ junction)\n",n,numConnections);
+        fprintf("\tNode %i belongs to >3 grains (%i grains,quadruple+ junction)\n",n,numGrainsPartOf);
+        
+        if any(nodeLoc(n,:)==0)&& any(nodeLoc(n,:)==max(max(nodeLoc)))
+            fprintf("\t\tNode %i is a boundary node, skipping (%.1f,%.1f)\n",n,nodeLoc(n,1),nodeLoc(n,2));
+            n=n+1;
+            continue
+        end
 
         %% Split each of the quadruple junctions into 2 triple junctions
 
@@ -36,8 +44,19 @@ while n<numNodes+1
        %Therefore the possible triple junction pairing as shown below, where
        %column 1/2 are the first triple junction and column 2/3 are the second.
        %each row corresponds to a different ordering of the triple junction
-       pairs = [connectNodes(b(1)),connectNodes(b(2)),connectNodes(b(3)),connectNodes(b(4));...
-                connectNodes(b(2)),connectNodes(b(3)),connectNodes(b(4)),connectNodes(b(1))]; 
+       
+       %Check if this is a boundary node
+       try
+           %try to treat it like a regular node...
+           pairs = [connectNodes(b(1)),connectNodes(b(2)),connectNodes(b(3)),connectNodes(b(4));...
+                    connectNodes(b(2)),connectNodes(b(3)),connectNodes(b(4)),connectNodes(b(1))]; 
+       catch
+           % if that fails, check if it is a boundary node, if so, skip it
+           if any(nodeLoc(n,:)==0)  || any(nodeLoc(n,:) == max(max(nodeLoc)))
+               n=n+1;
+               continue;
+           end
+       end
 
        %Find the location of the possible splits
        bisectors=[(connectNodePos(b(1),:)+connectNodePos(b(2),:))/2-(connectNodePos(b(3),:)+connectNodePos(b(4),:))/2;...

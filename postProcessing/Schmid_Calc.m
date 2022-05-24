@@ -3,12 +3,12 @@
 %% add path to MTEX code for post processing
 
 addpath("./postProcessing/");
-addpath("../../MTEX/mtex-5.81");
+addpath("../MTEX/mtex-5.8.1/");
 startup
 
 %% Load the dataset of interest
 
-load("../Studies/2022_04_29/recrystallization_data/parametricStudy0/study5/CPFEM_RX.mat");
+load("../Studies/2022_04_29/recrystallization_data/parametricStudy1/study11/CPFEM_RX.mat");
 
 % Add a column to the grainMat variable
 grainMat(:,9) = zeros(length(grainMat),1);
@@ -60,4 +60,7 @@ l.String = {"Before RX","After RX"};
 
 xlabel("Schmid Factor");
 ylabel("Frequency");
+
+sc0 = abs(grainMat(:,end));
+scFin = abs(grainMat(colsOfIterest,end));
 

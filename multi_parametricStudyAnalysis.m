@@ -6,11 +6,13 @@ addpath("./postProcessing");
 %% Define paths 
 
 % Define folder paths
-dataPath1 = "../Studies/2022_04_29/recrystallization_data/parametricStudy0/";
-dataPath2 = "../Studies/2022_04_29/recrystallization_data/parametricStudy1/";
-dataPath3 = "../Studies/2022_04_29/recrystallization_data/parametricStudy2/";
+% dataPath1 = "../Studies/2022_04_29/recrystallization_data/parametricStudy0/";
+% dataPath2 = "../Studies/2022_04_29/recrystallization_data/parametricStudy1/";
+% dataPath3 = "../Studies/2022_04_29/recrystallization_data/parametricStudy2/";
+dataPath4 = "../Studies/2022_05_18/recrystallization_data/parametricStudy/";
 
-folders = {dataPath1, dataPath2, dataPath3};
+%folders = {dataPath1, dataPath2, dataPath3};
+folders = {dataPath4};
 
 data = table; % table to hold ALL data collected
 
@@ -27,7 +29,7 @@ load(thePath + "simulation_environment.mat");
  
 % fig_dislocationDensities = figure;
 % fig_grainCount = figure;
-% fig_percentRX = figure;
+fig_percentRX = figure;
 
 dislocationDensities = zeros(total_trials,1); % average dislocation density of final structure
 totalGrains = zeros(total_trials,1); % total number of grains in final structure
@@ -65,16 +67,15 @@ for i = 1:length(temperatures)
                 
                 %Calculate the time to cut the number of grains in half -
                 %in seconds
-                %percent_RX = percentRecrystallization(storedInfo,iter-1,const); % find the percent RX
-                %percent_RX = percent_RX./max(percent_RX); % normalize to 1
+                percent_RX = percentRecrystallization(storedInfo,iter-1,const); % find the percent RX
                 
                 %recrystallizationTime(counter+1)=find(percent_RX>=0.5,1)*const.dt*const.inflationParameter;
                 %grain number calculation of percent RX
                 try
-                    recrystallizationTime(counter+1)= find(GrainCount<=max(GrainCount)/2,1)*const.dt*const.inflationParameter;
+                    recrystallizationTime(counter+1)= find(percent_RX>=0.5,1)*const.dt*const.inflationParameter;
                 catch %catch the error if the grain count hasnt been cut in half yet
                     fprintf("Didn't finish\n")
-                    recrystallizationTime(counter+1)= length(GrainCount)*const.dt*const.inflationParameter;
+                    recrystallizationTime(counter+1)= length(percent_RX)*const.dt*const.inflationParameter;
                 end
                     
 %                 figure(fig_grainCount);
@@ -89,12 +90,11 @@ for i = 1:length(temperatures)
 %                 plot((1:iter-1)*const.dt*const.inflationParameter,running_DD,...
 %                     'DisplayName',sprintf("T = %i, Total Strain = %0.3f, TJ mobility Ratio=%0.3f",temperatures(i),total_strain(j),TJ_mobilityRatio(m)));
 
-%                 %Plot the percent RX of the microstructure
-%                 percent_RX = percentRecrystallization(storedInfo,iter-1,const);
-%                 figure(fig_percentRX);
-%                 hold on
-%                 plot((1:iter-2)*const.dt*const.inflationParameter,percent_RX./max(percent_RX),...
-%                     'DisplayName',sprintf("T = %i, Total Strain = %0.3f, TJ mobility Ratio=%0.3f",temperatures(i),total_strain(j),TJ_mobilityRatio(m)));   
+                %Plot the percent RX of the microstructure
+                figure(fig_percentRX);
+                hold on
+                plot((1:iter-1)*const.dt*const.inflationParameter,percent_RX./max(percent_RX),...
+                    'DisplayName',sprintf("T = %i, Total Strain = %0.3f, TJ mobility Ratio=%0.3f",temperatures(i),total_strain(j),TJ_mobilityRatio(m)));   
 
 
                 %Clear the variables that were loaded from each study
@@ -114,7 +114,6 @@ subTable.strain = strainColumn;
 subTable.lambda = lambda;
 subTable.RX_time = recrystallizationTime;
 subTable.dislocationDensity = dislocationDensities;
-
 
 data = [data;subTable]; % combine the old and new tables
 
@@ -189,11 +188,11 @@ uData(1,:)=[];
 % set(gca,'Xscale','log')
 % legend
 % 
-% figure(fig_percentRX)
-% xlabel("Time [s]");
-% ylabel("Percent Recrystallized");
-% set(gca,'Xscale','log')
-% legend
+figure(fig_percentRX)
+xlabel("Time [s]");
+ylabel("Percent Recrystallized");
+set(gca,'Xscale','log')
+legend
 
     
 %% Create heatmaps

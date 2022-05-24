@@ -71,7 +71,7 @@ end
 
 if sign(R) == -sign(currentRadius) && R~=0
     R=0;
-    fprintf("\tSegment %i -> %i reset to straight\n",nodeID1,nodeID2);
+    %fprintf("\tSegment %i -> %i reset to straight\n",nodeID1,nodeID2);
     return
 end
 

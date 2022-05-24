@@ -44,6 +44,8 @@ const.b=2.8*10^-10; %Burgers vector [m]
 const.v=0.28; %Poisson's ratio
 const.coreWidth=2*const.b; %Dislocation Core Width [m]
 const.useCurvature = 1; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
+%const.useRecovery = 1; % whether or not to use static recovery
+
 
 %Variables to influence change of misorientation due to dislocation
 %absorption (boundary nucleation)
@@ -204,6 +206,11 @@ for t = dt:dt:totalTime
     [nodeLoc] = snapGrid(nodeLoc,gridSize);
     codeTimer.refineMesh=codeTimer.refineMesh+toc;
 
+    %Reduce the dislocation density via static recovery if needed
+    if const.useRecovery
+        grainMat = staticRecovery(grainMat,const);
+    end
+    
     %Calculate the position updates
     tic
     [posUpdates,nodeVel,segRadius] = forwardEuler(nodeBelong,grainMat,nodeConnect,nodeLoc,nodeVel,misorientMat,segRadius,const); %forward euler method for position integration

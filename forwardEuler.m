@@ -54,9 +54,9 @@ if constants.useCurvature ==1 %only update the curvature if user specifies
 
                 sharedGrains = sharedGrainLookUp(n1,n2,nodeBelong); %find the grains that are shared by the n1 <-> n2 grain boundary
                 if all(sharedGrains==0)
-                    misorientTheta = misorientMat(n1,n2); % lookup misroientation value for the boundary
-                else
                     misorientTheta=45; % sit-in assumption if n1 <-> n2 is an edge case or part or on the edge of the simulation boundary
+                else
+                    misorientTheta = misorientMat(sharedGrains(1),sharedGrains(2)); % lookup misroientation value for the boundary
                 end
                     
                 boundaryLength = norm(nodeLoc(n1,:)-nodeLoc(n2,:))/constants.gridSize*constants.realGridSize; %boundary length in real units [m] 

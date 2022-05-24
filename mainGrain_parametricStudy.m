@@ -2,9 +2,10 @@
 
 %% Parametric space to explore
 temperatures = [400,800]; %Temperature in C
-total_strain = [0.01,0.04]; %Total strain to run the CPFEM simulation
-TJ_mobilityRatio = [0.1,100]; %Total strain to run the CPFEM simulation
+total_strain = [0.1,0.15]; %Total strain to run the CPFEM simulation
+TJ_mobilityRatio = [1,10,100]; %Total strain to run the CPFEM simulation
 constants.useCOMSOL = 0; %whether or not to co-evolve the CPFEM COMSOL code for realistic dislocation densities
+const.useRecovery = 1; % whether or not to use static recovery
 
 replicas = 1; % # of replicas to run at each temperature/strain combination
 constants.plotMicrostructure=0; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
@@ -14,13 +15,15 @@ restartSim = 0; %restartSim==1 then we are restarting from a simulation that did
 restartIter = 1; % iteration to restart from
 studyTitle = "parametricStudy";
 total_trials = length(temperatures)*length(total_strain)*length(TJ_mobilityRatio)*replicas; % total number of simulations to run
-fileID = fopen(studyTitle+'/simParams.txt','a');
 
 if restartSim==0
     mkdir(studyTitle);
+    fileID = fopen(studyTitle+'/simParams.txt','a');
     fprintf(fileID,'temperature\tstrain\tTJmobilityRatio\tlabel\n');
+    fclose(fileID);
 end
 
+fileID = fopen(studyTitle+'/simParams.txt','a');
 postProcessParametric = 0; %1==run post processing analysis after parametric study, 0==don't run analysis of parametric study data
 
 %% Run parametric study

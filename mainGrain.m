@@ -10,17 +10,17 @@ addpath("./COMSOL_HandshakeFunctions");
 
 gridSize = 1000; % side length for square grid of size (gridSize,gridSize) when first constructing the vertices
 realGridSize=3e-6; %"true" size of the grid. Relevant to the velocity of the boundary motion
-numGrains = 60; %number of grains to pack into the grid
+numGrains = 30; %number of grains to pack into the grid
 const.realGridSize=realGridSize;
 const.gridSize=gridSize;
 const.numGrains = numGrains;
 
 minRemeshDistance=3; %minimum distance before combining nodes
 minGrainArea=80; %minimum grain area before removing grain
-dt = 0.5; %timestep each iteration
-totalTime=1500; %total time to run the simulation [s]
+dt = 1; %timestep each iteration
+totalTime=500; %total time to run the simulation [s]
 
-const.Temp =800; %Temperature [C]
+const.Temp =1200; %Temperature [C]
 
 %Mobility Parameters
 const.TJ_mobilityRatio = 1; % Multiplicative factor to find the triple junction mobility using the GB mobility
@@ -61,8 +61,8 @@ const.comsol_written_name = "poly_cp_2D_raw.java";
 %Set the dislocation density minimum and maximum. Used for plotting the
 %dislocation density map and also for assigning dislocation densities (if
 %needed)
-const.minDislocationDensity = 5e12;
-const.maxDislocationDensity = 5e15;
+const.minDislocationDensity = 1e16;
+const.maxDislocationDensity = 2e17;
 
 %Scale ratio for the x and y directions for elongated grain structures
 const.scalex = 0.3;
@@ -73,7 +73,7 @@ const.scaley = 0.3;
 %const.asymetricMicro = 0; %1==build an assymetric microstructure with small grains in side regions, 0== build normal microstructure
 %const.asymetricGrains = 26; %number of grains to build on the corners iff asymetricMicro==1
 
-const.plotMicrostructure=1; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
+const.plotMicrostructure=0; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable
 const.plotBoundaries = 0; %1==only plot the boundaries of all the grains, exclude any color. Default is random coloring
 const.plotNodeNumbers = 0; %1==plot the nodeIDs and boundary connections each iteration
 const.plotDislocationDensity = 1; %1==plot the dislocation density of each grain instead of a random color
@@ -113,6 +113,7 @@ tic %start timer for initilization
 
 fprintf("Generating grain centers and euler angles...\n");
 [grid,grainMat] = buildMicro(gridSize,numGrains,const);
+g = grainMat;
 
 C = linspecer(numGrains); %color map with unique distinguishable colors
 const.C = C; %save to constant dictionary
@@ -199,7 +200,7 @@ for t = dt:dt:totalTime
     
     %Reduce the dislocation density via static recovery if needed
     if const.useRecovery
-        grainMat = staticRecovery(grainMat,const);
+        [grainMat,const] = staticRecovery(grainMat,const,iter);
     end
 
     %Calculate the position updates

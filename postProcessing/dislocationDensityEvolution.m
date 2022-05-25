@@ -8,12 +8,11 @@ for iter = 1:maxIter %loop through each timestep
     runningDislocationDensity(iter) = extractDislocationDensity(storedInfo,constants.gridSize,iter);
 end
 
-%Plot the evolution of the grain size and count
+% %Plot the evolution of the grain size and count
 % figure
-% plot(runningDislocationDensity,[1:maxIter]*constants.dt*constants.inflationParameter);
+% plot([1:maxIter]*constants.dt*constants.inflationParameter,runningDislocationDensity);
 % xlabel("Time");
 % ylabel("Dislocation Density [m^-2]");
-
 
 end
 

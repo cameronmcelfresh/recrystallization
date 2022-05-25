@@ -46,7 +46,6 @@ const.coreWidth=2*const.b; %Dislocation Core Width [m]
 const.useCurvature = 1; % whether or not to allow grain boundaries to be curved via plastic strain energy differential
 %const.useRecovery = 1; % whether or not to use static recovery
 
-
 %Variables to influence change of misorientation due to dislocation
 %absorption (boundary nucleation)
 const.f = 0.4; % fraction of dislocations absorbed by the boundaries

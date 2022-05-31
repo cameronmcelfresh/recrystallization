@@ -1,11 +1,11 @@
 %% Script to run a parametric study of CPFEM + RX
 
 %% Parametric space to explore
-temperatures = [400,800]; %Temperature in C
-total_strain = [0.1,0.15]; %Total strain to run the CPFEM simulation
-TJ_mobilityRatio = [1,10,100]; %Total strain to run the CPFEM simulation
+temperatures = [400,800,1000]; %Temperature in C
+total_strain = [0.05,0.1,0.15]; %Total strain to run the CPFEM simulation
+TJ_mobilityRatio = [100]; %Total strain to run the CPFEM simulation
 constants.useCOMSOL = 0; %whether or not to co-evolve the CPFEM COMSOL code for realistic dislocation densities
-const.useRecovery = 1; % whether or not to use static recovery
+constants.useRecovery = 1; % whether or not to use static recovery
 
 replicas = 1; % # of replicas to run at each temperature/strain combination
 constants.plotMicrostructure=0; %1==plot the evolving grains, 0==don't generate plot. plotMicrostructure variable will override the writeMovie variable

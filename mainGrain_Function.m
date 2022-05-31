@@ -12,7 +12,7 @@ addpath("./COMSOL_HandshakeFunctions");
 
 gridSize = 1000; % side length for square grid of size (gridSize,gridSize) when first constructing the vertices
 realGridSize=3e-6; %"true" size of the grid. Relevant to the velocity of the boundary motion
-numGrains = 100; %number of grains to pack into the grid
+numGrains = 20; %number of grains to pack into the grid
 const.realGridSize=realGridSize;
 const.gridSize=gridSize;
 const.numGrains = numGrains;
@@ -204,12 +204,12 @@ for t = dt:dt:totalTime
     [nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel] = requireTripleJunctions(nodeBelong,nodeLoc,nodeConnect,segRadius,nodeVel,minRemeshDistance);
     [nodeLoc] = snapGrid(nodeLoc,gridSize);
     codeTimer.refineMesh=codeTimer.refineMesh+toc;
-
+    
     %Reduce the dislocation density via static recovery if needed
     if const.useRecovery
-        grainMat = staticRecovery(grainMat,const);
+        [grainMat,const] = staticRecovery(grainMat,const,iter);
     end
-    
+        
     %Calculate the position updates
     tic
     [posUpdates,nodeVel,segRadius] = forwardEuler(nodeBelong,grainMat,nodeConnect,nodeLoc,nodeVel,misorientMat,segRadius,const); %forward euler method for position integration
